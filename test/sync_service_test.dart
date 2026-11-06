@@ -122,4 +122,11 @@ void main() {
     expect(await codeFor(403), 'server_403');
     expect(await codeFor(500), 'server_500');
   });
+
+  test('newer owner login wins on either side', () {
+    final older = {'id': 'owner', 'phone': 'old', 'updated_at': '2026-01-01T00:00:00.000Z'};
+    final newer = {'id': 'owner', 'phone': 'new', 'updated_at': '2026-11-06T10:00:00.000Z'};
+    expect(SyncService.mergeById([older], [newer], preferLocal: true).single['phone'], 'new');
+    expect(SyncService.mergeById([newer], [older], preferLocal: false).single['phone'], 'new');
+  });
 }
