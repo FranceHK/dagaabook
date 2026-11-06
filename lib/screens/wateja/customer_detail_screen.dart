@@ -14,6 +14,7 @@ import '../../providers/sales_provider.dart';
 import '../../widgets/debt_badge.dart';
 import '../../widgets/empty_state.dart';
 import '../madeni/record_payment_sheet.dart';
+import 'add_customer_sheet.dart';
 
 class CustomerDetailScreen extends StatefulWidget {
   final Customer customer;
@@ -38,6 +39,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> with Single
     final lang = context.watch<LanguageProvider>();
     final customerProvider = context.watch<CustomerProvider>();
     final salesProvider = context.watch<SalesProvider>();
+    // Read the latest copy so edits show straight away.
+    final customer = customerProvider.byId(widget.customer.id) ?? widget.customer;
 
     final sales = salesProvider.salesForCustomer(widget.customer.id);
     final payments = customerProvider.paymentsForCustomer(widget.customer.id);
@@ -46,7 +49,21 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> with Single
     final totalPaid = sales.fold(0.0, (sum, s) => sum + s.amountPaid) + payments.fold(0.0, (sum, p) => sum + p.amount);
 
     return Scaffold(
-      appBar: AppBar(title: Text(lang.t('customerDetail'))),
+      appBar: AppBar(
+        title: Text(lang.t('customerDetail')),
+        actions: [
+          IconButton(
+            tooltip: lang.t('edit'),
+            icon: const Icon(AmazingIconOutlined.edit),
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => AddCustomerSheet(customer: customer),
+            ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Container(
@@ -59,18 +76,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> with Single
                   radius: 32,
                   backgroundColor: AppColors.amber,
                   child: Text(
-                    widget.customer.name.isNotEmpty ? widget.customer.name[0].toUpperCase() : '?',
+                    customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
                     style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.deepBlue),
                   ),
                 ),
                 const SizedBox(height: 10),
-                Text(widget.customer.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(customer.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                Text(widget.customer.phone, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
-                if (widget.customer.location.isNotEmpty)
+                Text(customer.phone, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+                if (customer.location.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: Text(widget.customer.location, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    child: Text(customer.location, style: const TextStyle(color: Colors.white54, fontSize: 12)),
                   ),
                 const SizedBox(height: 16),
                 Row(
@@ -79,7 +96,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> with Single
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54)),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${lang.t('call')}: ${widget.customer.phone}')));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${lang.t('call')}: ${customer.phone}')));
                       },
                       icon: const Icon(AmazingIconOutlined.call, size: 16),
                       label: Text(lang.t('call')),
@@ -91,7 +108,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> with Single
                           context: context,
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
-                          builder: (_) => RecordPaymentSheet(customer: widget.customer, currentBalance: balance),
+                          builder: (_) => RecordPaymentSheet(customer: customer, currentBalance: balance),
                         ),
                         icon: const Icon(AmazingIconOutlined.wallet, size: 16),
                         label: Text(lang.t('recordPayment')),
@@ -188,7 +205,10 @@ class _PurchaseHistoryList extends StatelessWidget {
               child: Icon(createsDebt ? AmazingIconOutlined.clock : AmazingIconOutlined.money, color: createsDebt ? AppColors.amberDark : AppColors.success),
             ),
             title: Text('${sale.stockType} • ${sale.magunia} ${lang.t('magunia')} @ ${AppFormatters.money(sale.pricePerBag)}'),
-            subtitle: Text(AppFormatters.date(sale.date)),
+            subtitle: Text(
+              AppFormatters.date(sale.date) +
+                  (sale.transactionId.isNotEmpty ? '\n${lang.t('transactionShort')}: ${sale.transactionId}' : ''),
+            ),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -227,7 +247,11 @@ class _PaymentHistoryList extends StatelessWidget {
               child: Icon(AmazingIconOutlined.tickCircle, color: AppColors.success),
             ),
             title: Text(AppFormatters.money(payment.amount), style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(payment.note.isNotEmpty ? payment.note : AppFormatters.date(payment.date)),
+            subtitle: Text([
+              payment.isMobile ? lang.t('mobile') : lang.t('cash'),
+              if (payment.transactionId.isNotEmpty) '${lang.t('transactionShort')}: ${payment.transactionId}',
+              if (payment.note.isNotEmpty) payment.note,
+            ].join(' • ')),
             trailing: Text(AppFormatters.dateShort(payment.date), style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
           ),
         );
