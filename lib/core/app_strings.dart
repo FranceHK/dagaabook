@@ -266,6 +266,15 @@ class AppStrings {
     'logoutAnyway': 'Una mauzo ambayo hayajatumwa na hayatatumwa. Ondoka hata hivyo?',
     'soldByLabel': 'Ameuza',
     'helperSignedOut': 'Akaunti yako imesimamishwa au nywila imebadilishwa. Ondoka kisha ingia tena.',
+
+    // App updates
+    'updateTitle': 'Kuna Update Mpya',
+    'updateBody': 'Toleo {version} liko tayari. Pakua kisha sakinisha juu ya app hii. Data yako haitafutika.',
+    'updateLater': 'Baadaye',
+    'updateDownload': 'Pakua',
+    'checkUpdate': 'Angalia Update',
+    'upToDate': 'Una toleo jipya kabisa',
+    'updateCheckFailed': 'Imeshindwa kuangalia update. Hakikisha una mtandao.',
     'editProfile': 'Hariri Taarifa za Biashara',
     'changeLogin': 'Badili Namba / Nywila ya Kuingia',
     'currentPassword': 'Nywila ya Sasa',
@@ -538,6 +547,15 @@ class AppStrings {
     'logoutAnyway': 'You have sales that were not sent and will be lost. Log out anyway?',
     'soldByLabel': 'Sold by',
     'helperSignedOut': 'Your account was stopped or its password changed. Log out and log in again.',
+
+    // App updates
+    'updateTitle': 'New Update Available',
+    'updateBody': 'Version {version} is ready. Download it and install over this app. Your data stays.',
+    'updateLater': 'Later',
+    'updateDownload': 'Download',
+    'checkUpdate': 'Check for Update',
+    'upToDate': 'You have the latest version',
+    'updateCheckFailed': 'Could not check for updates. Check your internet.',
     'editProfile': 'Edit Business Details',
     'changeLogin': 'Change Login Phone / Password',
     'currentPassword': 'Current Password',
