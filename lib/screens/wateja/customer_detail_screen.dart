@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
+import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/debt_calculator.dart';
 import '../../core/formatters.dart';
@@ -50,7 +51,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> with Single
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.symmetric(horizontal: Responsive.sidePadding(context, min: 20), vertical: 20),
             color: AppColors.deepBlue,
             child: Column(
               children: [
@@ -101,7 +102,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> with Single
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: Responsive.sidePadding(context), vertical: 14),
             color: AppColors.surface,
             child: Row(
               children: [
@@ -174,7 +175,7 @@ class _PurchaseHistoryList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (sales.isEmpty) return EmptyState(icon: AmazingIconOutlined.receipt, message: lang.t('noHistory'));
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: Responsive.sidePadding(context), vertical: 16),
       itemCount: sales.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, i) {
@@ -214,7 +215,7 @@ class _PaymentHistoryList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (payments.isEmpty) return EmptyState(icon: AmazingIconOutlined.wallet, message: lang.t('noHistory'));
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: Responsive.sidePadding(context), vertical: 16),
       itemCount: payments.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, i) {
