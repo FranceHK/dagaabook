@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
+import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/formatters.dart';
 import '../../models/customer.dart';
@@ -10,7 +11,6 @@ import '../../providers/customer_provider.dart';
 import '../../providers/inventory_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/sales_provider.dart';
-import '../../services/api_service.dart';
 
 /// Full-page "Uza" flow: search/pick a customer (or add one inline), choose
 /// how many magunia they're taking from this specific stock batch, and
@@ -56,7 +56,7 @@ class _SellStockScreenState extends State<SellStockScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context, min: 20, maxWidth: Responsive.maxFormWidth), 16, Responsive.sidePadding(context, min: 20, maxWidth: Responsive.maxFormWidth), 24),
           children: [
             Container(
               padding: const EdgeInsets.all(16),
@@ -115,7 +115,7 @@ class _SellStockScreenState extends State<SellStockScreen> {
                     elevation: 4,
                     borderRadius: BorderRadius.circular(12),
                     child: SizedBox(
-                      width: MediaQuery.of(context).size.width - 40,
+                      width: MediaQuery.sizeOf(context).width - 2 * Responsive.sidePadding(context, min: 20, maxWidth: Responsive.maxFormWidth),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxHeight: 220),
                         child: ListView.builder(
@@ -178,7 +178,7 @@ class _SellStockScreenState extends State<SellStockScreen> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 2.4,
+              childAspectRatio: Responsive.isTablet(context) ? 4.5 : 2.4,
               children: [
                 _PaymentOption(
                   label: lang.t('cash'),
@@ -261,9 +261,7 @@ class _SellStockScreenState extends State<SellStockScreen> {
       PaymentType.partial => double.tryParse(_partialAmountController.text) ?? 0,
     };
 
-    if (!ApiService.isAvailable) {
-      inventory.recordSale(stockItemId: widget.stockItem.id, magunia: magunia);
-    }
+    inventory.recordSale(stockItemId: widget.stockItem.id, magunia: magunia);
 
     await salesProvider.addSale(
       stockItemId: widget.stockItem.id,
