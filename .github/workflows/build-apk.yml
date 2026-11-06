@@ -41,8 +41,44 @@ jobs:
       - name: Test
         run: flutter test
 
+      - name: Set up release signing
+        if: github.event_name != 'pull_request'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Release key secrets are missing, so the APK could not update the installed app."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/dagaabook-release.jks
+          {
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEY_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "storeFile=dagaabook-release.jks"
+          } > android/key.properties
+
+      # Tags (v1.2.0) set the version name; the run number always grows, so
+      # Android accepts each new APK as an update.
+      - name: Work out version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            NAME="${GITHUB_REF_NAME#v}"
+          else
+            NAME="$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')"
+          fi
+          echo "BUILD_NAME=$NAME" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=$((GITHUB_RUN_NUMBER + 100))" >> "$GITHUB_ENV"
+
       - name: Build APK
-        run: flutter build apk --release
+        run: >
+          flutter build apk --release
+          --build-name="$BUILD_NAME"
+          --build-number="$BUILD_NUMBER"
+          --dart-define=APP_VERSION="$BUILD_NAME"
 
       - name: Rename APK
         run: mv build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/dagaabook-$APK_VERSION.apk"
