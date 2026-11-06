@@ -174,6 +174,26 @@ Msaidizi anaweza **kuongeza tu**: mauzo ya cash kwa bei sahihi, na wateja wapya.
 
 </details>
 
+### 🔑 Namba na nywila ya mmiliki
+
+Login ya mmiliki inahifadhiwa kwenye database (jedwali `records`, `collection = 'account'`). Nywila haihifadhiwi kama ilivyo; inahifadhiwa ikiwa imefichwa (hash).
+
+- **Kawaida:** ibadilishe ndani ya app: *Wasifu → Badili Namba / Nywila ya Kuingia*. Inaenda database yenyewe.
+- **Kutoka database** (mfano umesahau nywila): endesha hii kwenye **Neon → SQL Editor**, ukiweka namba na nywila mpya:
+
+```sql
+INSERT INTO records (collection, id, data)
+VALUES ('account', 'owner', jsonb_build_object(
+  'id', 'owner',
+  'phone', '0712345678',
+  'new_password', 'NywilaMpya123',
+  'updated_at', to_char(now() AT TIME ZONE 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')))
+ON CONFLICT (collection, id)
+DO UPDATE SET data = records.data || EXCLUDED.data, updated_at = now();
+```
+
+Fungua app ukiwa na mtandao. Ndani ya sekunde chache itapokea login mpya, itaficha nywila, na kuifuta `new_password` kwenye database. Kisha ingia kwa namba na nywila mpya.
+
 ---
 
 ## 🚀 Kutoa update
