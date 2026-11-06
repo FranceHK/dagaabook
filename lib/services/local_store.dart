@@ -85,5 +85,5 @@ class LocalStore {
   /// A unique id for a new record. The random part keeps ids from two phones
   /// (owner and helper) apart even when made at the same moment.
   static String newId(String prefix) =>
-      '${prefix}_${DateTime.now().microsecondsSinceEpoch}_${_random.nextInt(1 << 32).toRadixString(36)}';
+      '${prefix}_${DateTime.now().microsecondsSinceEpoch}_${_random.nextInt(0x7fffffff).toRadixString(36)}';
 }
