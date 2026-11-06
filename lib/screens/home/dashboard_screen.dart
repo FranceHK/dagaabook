@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
+import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/debt_calculator.dart';
 import '../../core/formatters.dart';
@@ -45,7 +46,7 @@ class DashboardScreen extends StatelessWidget {
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 16, bottom: 14, right: 16),
+              titlePadding: EdgeInsets.only(left: Responsive.sidePadding(context), bottom: 14, right: 16),
               title: Text(
                 settings.profile.businessName,
                 style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
@@ -59,18 +60,20 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context), 16, Responsive.sidePadding(context), 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 Text('${lang.t('greeting')}, ${settings.profile.ownerName} 👋', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5)),
                 const SizedBox(height: 16),
-                GridView.count(
-                  crossAxisCount: 2,
+                GridView(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.05,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: Responsive.isTablet(context) ? 4 : 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: 136,
+                  ),
                   children: [
                     SummaryCard(
                       label: lang.t('totalStock'),
@@ -109,7 +112,7 @@ class DashboardScreen extends StatelessWidget {
                 SectionTitle(title: lang.t('quickActions')),
                 const SizedBox(height: 8),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: Responsive.isTablet(context) ? MainAxisAlignment.spaceEvenly : MainAxisAlignment.spaceBetween,
                   children: [
                     QuickActionButton(icon: AmazingIconOutlined.boxAdd, label: lang.t('addStock'), onTap: () => shell?.goToTab(1)),
                     QuickActionButton(icon: AmazingIconOutlined.moneyRecive, label: lang.t('recordSale'), onTap: () => shell?.goToTab(1)),

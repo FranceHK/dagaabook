@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
+import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
-import '../auth/login_screen.dart';
+import '../../providers/settings_provider.dart';
+import 'edit_profile_sheet.dart';
 import '../settings/settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -14,8 +16,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>();
-    final auth = context.watch<AuthProvider>();
-    final user = auth.user;
+    final profile = context.watch<SettingsProvider>().profile;
 
     return Scaffold(
       body: CustomScrollView(
@@ -50,8 +51,8 @@ class ProfileScreen extends StatelessWidget {
                         radius: 36,
                         backgroundColor: Colors.white.withValues(alpha: 0.2),
                         child: Text(
-                          user != null && user.fullName.isNotEmpty
-                              ? user.fullName[0].toUpperCase()
+                          profile.ownerName.isNotEmpty
+                              ? profile.ownerName[0].toUpperCase()
                               : '?',
                           style: const TextStyle(
                             fontSize: 28,
@@ -62,7 +63,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        user?.fullName ?? 'Mtumiaji',
+                        profile.ownerName,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -71,7 +72,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        user?.phone ?? '',
+                        profile.businessName,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 13,
@@ -84,7 +85,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.symmetric(horizontal: Responsive.sidePadding(context, maxWidth: Responsive.maxFormWidth), vertical: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _SectionTitle(title: lang.t('accountInfo')),
@@ -93,21 +94,57 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       _ProfileTile(
+                        icon: AmazingIconOutlined.shop,
+                        label: lang.t('businessName'),
+                        value: profile.businessName,
+                      ),
+                      const Divider(height: 1, indent: 56),
+                      _ProfileTile(
                         icon: AmazingIconOutlined.user,
                         label: lang.t('ownerName'),
-                        value: user?.fullName ?? '-',
+                        value: profile.ownerName,
                       ),
                       const Divider(height: 1, indent: 56),
                       _ProfileTile(
                         icon: AmazingIconOutlined.call,
                         label: lang.t('phoneNumber'),
-                        value: user?.phone ?? '-',
+                        value: profile.phone,
                       ),
                       const Divider(height: 1, indent: 56),
                       _ProfileTile(
                         icon: AmazingIconOutlined.location,
                         label: lang.t('location'),
-                        value: user?.location ?? '-',
+                        value: profile.location,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(AmazingIconOutlined.edit, size: 20, color: AppColors.deepBlue),
+                        title: Text(lang.t('editProfile'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const EditProfileSheet(),
+                        ),
+                      ),
+                      const Divider(height: 1, indent: 56),
+                      ListTile(
+                        leading: const Icon(AmazingIconOutlined.lock, size: 20, color: AppColors.deepBlue),
+                        title: Text(lang.t('changeLogin'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const ChangeLoginSheet(),
+                        ),
                       ),
                     ],
                   ),
@@ -201,11 +238,6 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () async {
               Navigator.of(ctx).pop();
               await context.read<AuthProvider>().logout();
-              if (context.mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              }
             },
             child: Text(lang.t('confirm'), style: const TextStyle(color: AppColors.danger)),
           ),

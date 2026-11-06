@@ -36,4 +36,30 @@ class Sale {
   double get outstanding => (totalAmount - amountPaid).clamp(0, double.infinity);
 
   bool get isFullyPaid => outstanding <= 0.001;
+
+  factory Sale.fromJson(Map<String, dynamic> json) => Sale(
+        id: json['id'],
+        stockItemId: json['stock_item_id'] ?? '',
+        stockType: json['stock_type'],
+        customerId: json['customer_id'],
+        customerName: json['customer_name'],
+        magunia: json['magunia'],
+        pricePerBag: (json['price_per_bag'] as num).toDouble(),
+        paymentType: PaymentType.values.byName(json['payment_type']),
+        amountPaid: (json['amount_paid'] as num).toDouble(),
+        date: DateTime.parse(json['date']),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'stock_item_id': stockItemId,
+        'stock_type': stockType,
+        'customer_id': customerId,
+        'customer_name': customerName,
+        'magunia': magunia,
+        'price_per_bag': pricePerBag,
+        'payment_type': paymentType.name,
+        'amount_paid': amountPaid,
+        'date': date.toIso8601String(),
+      };
 }

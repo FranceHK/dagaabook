@@ -1,21 +1,31 @@
 import 'package:flutter/foundation.dart';
+import '../core/app_owner.dart';
 import '../models/business_profile.dart';
+import '../services/local_store.dart';
 
-/// Business profile & app settings. Backed by local state for now; will be
-/// persisted to the backend once Neon Postgres is connected.
+/// The owner's business profile, saved on this device.
 class SettingsProvider extends ChangeNotifier {
-  BusinessProfile _profile = const BusinessProfile(
-    businessName: 'Mwanza Dagaa Traders',
-    ownerName: 'Baba Juma',
-    phone: '0755 123 456',
-    location: 'Kirumba, Mwanza',
-    currency: 'TZS',
-  );
+  BusinessProfile _profile = AppOwner.defaultProfile;
 
   BusinessProfile get profile => _profile;
 
-  void updateProfile(BusinessProfile profile) {
+  SettingsProvider() {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final json = await LocalStore.loadMap(LocalStore.profileKey);
+      if (json != null) {
+        _profile = BusinessProfile.fromJson(json);
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> updateProfile(BusinessProfile profile) async {
     _profile = profile;
     notifyListeners();
+    await LocalStore.saveMap(LocalStore.profileKey, profile.toJson());
   }
 }

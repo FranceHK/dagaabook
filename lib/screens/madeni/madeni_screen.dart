@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
+import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/debt_calculator.dart';
 import '../../core/formatters.dart';
@@ -49,7 +50,7 @@ class _MadeniScreenState extends State<MadeniScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(lang.t('madeniTitle'))),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context), 16, Responsive.sidePadding(context), 24),
         children: [
           Row(
             children: [

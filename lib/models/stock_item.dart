@@ -1,9 +1,6 @@
 /// A batch of dagaa stock received into inventory, tracked by magunia (bags)
 /// rather than loose kg — this matches how wholesale dagaa is actually
 /// bought and sold in Mwanza.
-///
-/// `id` is a local mock identifier; when the backend is connected this
-/// should map 1:1 to the Neon Postgres primary key.
 class StockItem {
   final String id;
   final String type;
@@ -54,4 +51,26 @@ class StockItem {
       supplier: supplier ?? this.supplier,
     );
   }
+
+  factory StockItem.fromJson(Map<String, dynamic> json) => StockItem(
+        id: json['id'],
+        type: json['type'],
+        totalMagunia: json['total_magunia'],
+        soldMagunia: json['sold_magunia'] ?? 0,
+        purchasePricePerBag: (json['purchase_price_per_bag'] as num).toDouble(),
+        sellingPricePerBag: (json['selling_price_per_bag'] as num).toDouble(),
+        dateAdded: DateTime.parse(json['date_added']),
+        supplier: json['supplier'] ?? '',
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'total_magunia': totalMagunia,
+        'sold_magunia': soldMagunia,
+        'purchase_price_per_bag': purchasePricePerBag,
+        'selling_price_per_bag': sellingPricePerBag,
+        'date_added': dateAdded.toIso8601String(),
+        'supplier': supplier,
+      };
 }

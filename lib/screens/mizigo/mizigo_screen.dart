@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
+import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/formatters.dart';
 import '../../models/stock_item.dart';
@@ -51,7 +52,7 @@ class MizigoScreen extends StatelessWidget {
         child: const Icon(AmazingIconOutlined.add),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+        padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context), 16, Responsive.sidePadding(context), 90),
         children: [
           Row(
             children: [

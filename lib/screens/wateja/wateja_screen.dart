@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
+import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/debt_calculator.dart';
 import '../../providers/customer_provider.dart';
@@ -60,7 +61,7 @@ class _WatejaScreenState extends State<WatejaScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context), 16, Responsive.sidePadding(context), 8),
             child: TextField(
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
@@ -73,7 +74,7 @@ class _WatejaScreenState extends State<WatejaScreen> {
             child: filtered.isEmpty
                 ? EmptyState(icon: AmazingIconOutlined.people, message: lang.t('noCustomers'))
                 : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
+                    padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context), 8, Responsive.sidePadding(context), 90),
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {

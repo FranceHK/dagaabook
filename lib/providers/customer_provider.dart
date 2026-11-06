@@ -1,16 +1,13 @@
 import 'package:flutter/foundation.dart';
 import '../models/customer.dart';
 import '../models/payment.dart';
-import '../services/api_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/local_store.dart';
 
 /// Manages Wateja (customers) and the Malipo (payments) they make toward
-/// outstanding debt. Falls back to local data when the API server is unavailable.
+/// outstanding debt. Saved on this device.
 class CustomerProvider extends ChangeNotifier {
   final List<Customer> _customers = [];
   final List<Payment> _payments = [];
-  int _customerCounter = 100;
-  int _paymentCounter = 100;
   bool _isLoading = false;
   String? _error;
 
@@ -29,31 +26,29 @@ class CustomerProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (await ApiService.checkConnection()) {
-        final results = await Future.wait([
-          ApiService.getCustomers(),
-          ApiService.getPayments(),
-        ]);
-        _customers.clear();
-        _customers.addAll(results[0] as List<Customer>);
-        _payments.clear();
-        _payments.addAll(results[1] as List<Payment>);
-      } else {
-        _customers.clear();
-        _customers.addAll(MockDataService.seedCustomers());
-        _payments.clear();
-        _payments.addAll(MockDataService.seedPayments());
-      }
+      final results = await Future.wait([
+        LocalStore.loadList(LocalStore.customersKey, Customer.fromJson),
+        LocalStore.loadList(LocalStore.paymentsKey, Payment.fromJson),
+      ]);
+      _customers
+        ..clear()
+        ..addAll(results[0] as List<Customer>);
+      _payments
+        ..clear()
+        ..addAll(results[1] as List<Payment>);
     } catch (e) {
-      _customers.clear();
-      _customers.addAll(MockDataService.seedCustomers());
-      _payments.clear();
-      _payments.addAll(MockDataService.seedPayments());
+      _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
+
+  Future<void> _saveCustomers() =>
+      LocalStore.saveList(LocalStore.customersKey, _customers.map((c) => c.toJson()).toList());
+
+  Future<void> _savePayments() =>
+      LocalStore.saveList(LocalStore.paymentsKey, _payments.map((p) => p.toJson()).toList());
 
   Customer? byId(String id) {
     try {
@@ -78,24 +73,16 @@ class CustomerProvider extends ChangeNotifier {
     required String phone,
     String location = '',
   }) async {
-    Customer customer;
-    if (ApiService.isAvailable) {
-      customer = await ApiService.createCustomer(
-        name: name,
-        phone: phone,
-        location: location,
-      );
-    } else {
-      customer = Customer(
-        id: 'local_cust_${_customerCounter++}',
-        name: name,
-        phone: phone,
-        location: location,
-        createdAt: DateTime.now(),
-      );
-    }
+    final customer = Customer(
+      id: LocalStore.newId('cust'),
+      name: name,
+      phone: phone,
+      location: location,
+      createdAt: DateTime.now(),
+    );
     _customers.add(customer);
     notifyListeners();
+    await _saveCustomers();
     return customer;
   }
 
@@ -105,23 +92,14 @@ class CustomerProvider extends ChangeNotifier {
     String note = '',
     DateTime? date,
   }) async {
-    Payment payment;
-    if (ApiService.isAvailable) {
-      payment = await ApiService.createPayment(
-        customerId: customerId,
-        amount: amount,
-        note: note,
-      );
-    } else {
-      payment = Payment(
-        id: 'local_pay_${_paymentCounter++}',
-        customerId: customerId,
-        amount: amount,
-        date: date ?? DateTime.now(),
-        note: note,
-      );
-    }
-    _payments.add(payment);
+    _payments.add(Payment(
+      id: LocalStore.newId('pay'),
+      customerId: customerId,
+      amount: amount,
+      date: date ?? DateTime.now(),
+      note: note,
+    ));
     notifyListeners();
+    await _savePayments();
   }
 }

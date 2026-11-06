@@ -28,4 +28,20 @@ class BusinessProfile {
       currency: currency ?? this.currency,
     );
   }
+
+  factory BusinessProfile.fromJson(Map<String, dynamic> json) => BusinessProfile(
+        businessName: json['business_name'] ?? '',
+        ownerName: json['owner_name'] ?? '',
+        phone: json['phone'] ?? '',
+        location: json['location'] ?? '',
+        currency: json['currency'] ?? 'TZS',
+      );
+
+  Map<String, dynamic> toJson() => {
+        'business_name': businessName,
+        'owner_name': ownerName,
+        'phone': phone,
+        'location': location,
+        'currency': currency,
+      };
 }
