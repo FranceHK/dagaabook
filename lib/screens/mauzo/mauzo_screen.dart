@@ -116,7 +116,8 @@ class _SaleCard extends StatelessWidget {
           ),
           title: Text(sale.customerName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
           subtitle: Text(
-            '${sale.magunia} ${lang.t('magunia')} @ ${AppFormatters.money(sale.pricePerBag)} • ${AppFormatters.dateShort(sale.date)}',
+            '${sale.magunia} ${lang.t('magunia')} @ ${AppFormatters.money(sale.pricePerBag)} • ${AppFormatters.dateShort(sale.date)}'
+            '${sale.transactionId.isNotEmpty ? '\n${lang.t('transactionShort')}: ${sale.transactionId}' : ''}',
             style: const TextStyle(fontSize: 12),
           ),
           trailing: Column(
