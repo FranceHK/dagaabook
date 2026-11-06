@@ -1,12 +1,10 @@
 import 'package:flutter/foundation.dart';
 import '../models/sale.dart';
-import '../services/api_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/local_store.dart';
 
-/// Manages Mauzo (sales transactions). Falls back to local data when the API server is unavailable.
+/// Manages Mauzo (sales transactions). Saved on this device.
 class SalesProvider extends ChangeNotifier {
   final List<Sale> _sales = [];
-  int _counter = 100;
   bool _isLoading = false;
   String? _error;
 
@@ -36,17 +34,12 @@ class SalesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (await ApiService.checkConnection()) {
-        final salesData = await ApiService.getSales();
-        _sales.clear();
-        _sales.addAll(salesData);
-      } else {
-        _sales.clear();
-        _sales.addAll(MockDataService.seedSales());
-      }
+      final salesData = await LocalStore.loadList(LocalStore.salesKey, Sale.fromJson);
+      _sales
+        ..clear()
+        ..addAll(salesData);
     } catch (e) {
-      _sales.clear();
-      _sales.addAll(MockDataService.seedSales());
+      _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -72,34 +65,21 @@ class SalesProvider extends ChangeNotifier {
     required double amountPaid,
     DateTime? date,
   }) async {
-    Sale sale;
-    if (ApiService.isAvailable) {
-      sale = await ApiService.createSale(
-        stockItemId: stockItemId,
-        stockType: stockType,
-        customerId: customerId,
-        customerName: customerName,
-        magunia: magunia,
-        pricePerBag: pricePerBag,
-        paymentType: paymentType,
-        amountPaid: amountPaid,
-      );
-    } else {
-      sale = Sale(
-        id: 'local_sale_${_counter++}',
-        stockItemId: stockItemId,
-        stockType: stockType,
-        customerId: customerId,
-        customerName: customerName,
-        magunia: magunia,
-        pricePerBag: pricePerBag,
-        paymentType: paymentType,
-        amountPaid: amountPaid,
-        date: date ?? DateTime.now(),
-      );
-    }
+    final sale = Sale(
+      id: LocalStore.newId('sale'),
+      stockItemId: stockItemId,
+      stockType: stockType,
+      customerId: customerId,
+      customerName: customerName,
+      magunia: magunia,
+      pricePerBag: pricePerBag,
+      paymentType: paymentType,
+      amountPaid: amountPaid,
+      date: date ?? DateTime.now(),
+    );
     _sales.add(sale);
     notifyListeners();
+    await LocalStore.saveList(LocalStore.salesKey, _sales.map((s) => s.toJson()).toList());
     return sale;
   }
 }
