@@ -20,7 +20,11 @@ import '../../providers/sales_provider.dart';
 class SellStockScreen extends StatefulWidget {
   final StockItem stockItem;
 
-  const SellStockScreen({super.key, required this.stockItem});
+  /// Set when a helper is selling: payment is cash only and the sale is
+  /// marked with the helper's id.
+  final String? helperId;
+
+  const SellStockScreen({super.key, required this.stockItem, this.helperId});
 
   @override
   State<SellStockScreen> createState() => _SellStockScreenState();
@@ -59,7 +63,12 @@ class _SellStockScreenState extends State<SellStockScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context, min: 20, maxWidth: Responsive.maxFormWidth), 16, Responsive.sidePadding(context, min: 20, maxWidth: Responsive.maxFormWidth), 24),
+          padding: EdgeInsets.fromLTRB(
+            Responsive.sidePadding(context, min: 20, maxWidth: Responsive.maxFormWidth),
+            16,
+            Responsive.sidePadding(context, min: 20, maxWidth: Responsive.maxFormWidth),
+            24,
+          ),
           children: [
             Container(
               padding: const EdgeInsets.all(16),
@@ -100,11 +109,7 @@ class _SellStockScreenState extends State<SellStockScreen> {
                 return TextFormField(
                   controller: controller,
                   focusNode: focusNode,
-                  decoration: InputDecoration(
-                    labelText: lang.t('selectCustomer'),
-                    hintText: lang.t('searchCustomerHint'),
-                    prefixIcon: const Icon(AmazingIconOutlined.searchNormal, size: 20),
-                  ),
+                  decoration: InputDecoration(labelText: lang.t('selectCustomer'), hintText: lang.t('searchCustomerHint'), prefixIcon: const Icon(AmazingIconOutlined.searchNormal, size: 20)),
                   onChanged: (_) {
                     if (_selectedCustomer != null) setState(() => _selectedCustomer = null);
                   },
@@ -168,47 +173,59 @@ class _SellStockScreenState extends State<SellStockScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(lang.t('totalAmount'), style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(AppFormatters.money(_total), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.amberDark)),
+                  Text(
+                    AppFormatters.money(_total),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.amberDark),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            Text(lang.t('paymentType'), style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
-            const SizedBox(height: 8),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: Responsive.isTablet(context) ? 4.5 : 2.4,
-              children: [
-                _PaymentOption(
-                  label: lang.t('cash'),
-                  icon: AmazingIconOutlined.wallet,
-                  selected: _paymentType == PaymentType.cash,
-                  onTap: () => setState(() => _paymentType = PaymentType.cash),
+            if (widget.helperId != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: Row(
+                  children: [
+                    const Icon(AmazingIconOutlined.wallet, size: 18, color: AppColors.success),
+                    const SizedBox(width: 10),
+                    Text(lang.t('cashOnlyNote'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ],
                 ),
-                _PaymentOption(
-                  label: lang.t('mobile'),
-                  icon: AmazingIconOutlined.mobile,
-                  selected: _paymentType == PaymentType.mobile,
-                  onTap: () => setState(() => _paymentType = PaymentType.mobile),
-                ),
-                _PaymentOption(
-                  label: lang.t('credit'),
-                  icon: AmazingIconOutlined.clock,
-                  selected: _paymentType == PaymentType.credit,
-                  onTap: () => setState(() => _paymentType = PaymentType.credit),
-                ),
-                _PaymentOption(
-                  label: lang.t('partial'),
-                  icon: AmazingIconOutlined.percentageCircle,
-                  selected: _paymentType == PaymentType.partial,
-                  onTap: () => setState(() => _paymentType = PaymentType.partial),
-                ),
-              ],
-            ),
+              )
+            else ...[
+              Text(lang.t('paymentType'), style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+              const SizedBox(height: 8),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: Responsive.isTablet(context) ? 4.5 : 2.4,
+                children: [
+                  _PaymentOption(label: lang.t('cash'), icon: AmazingIconOutlined.wallet, selected: _paymentType == PaymentType.cash, onTap: () => setState(() => _paymentType = PaymentType.cash)),
+                  _PaymentOption(
+                    label: lang.t('mobile'),
+                    icon: AmazingIconOutlined.mobile,
+                    selected: _paymentType == PaymentType.mobile,
+                    onTap: () => setState(() => _paymentType = PaymentType.mobile),
+                  ),
+                  _PaymentOption(
+                    label: lang.t('credit'),
+                    icon: AmazingIconOutlined.clock,
+                    selected: _paymentType == PaymentType.credit,
+                    onTap: () => setState(() => _paymentType = PaymentType.credit),
+                  ),
+                  _PaymentOption(
+                    label: lang.t('partial'),
+                    icon: AmazingIconOutlined.percentageCircle,
+                    selected: _paymentType == PaymentType.partial,
+                    onTap: () => setState(() => _paymentType = PaymentType.partial),
+                  ),
+                ],
+              ),
+            ],
             if (_paymentType == PaymentType.partial) ...[
               const SizedBox(height: 14),
               TextFormField(
@@ -229,9 +246,7 @@ class _SellStockScreenState extends State<SellStockScreen> {
                 controller: _transactionController,
                 textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
-                  labelText: _paymentType == PaymentType.mobile
-                      ? lang.t('transactionId')
-                      : '${lang.t('transactionId')} (${lang.t('ifPaidByPhone')})',
+                  labelText: _paymentType == PaymentType.mobile ? lang.t('transactionId') : '${lang.t('transactionId')} (${lang.t('ifPaidByPhone')})',
                   hintText: lang.t('transactionIdHint'),
                   prefixIcon: const Icon(AmazingIconOutlined.receiptText, size: 20),
                 ),
@@ -246,10 +261,7 @@ class _SellStockScreenState extends State<SellStockScreen> {
               ),
             ],
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _submit,
-              child: Text(lang.t('sell')),
-            ),
+            ElevatedButton(onPressed: _submit, child: Text(lang.t('sell'))),
           ],
         ),
       ),
@@ -297,9 +309,8 @@ class _SellStockScreenState extends State<SellStockScreen> {
       pricePerBag: widget.stockItem.sellingPricePerBag,
       paymentType: _paymentType,
       amountPaid: amountPaid,
-      transactionId: _paymentType == PaymentType.mobile || _paymentType == PaymentType.partial
-          ? TransactionIds.normalize(_transactionController.text)
-          : '',
+      transactionId: _paymentType == PaymentType.mobile || _paymentType == PaymentType.partial ? TransactionIds.normalize(_transactionController.text) : '',
+      soldBy: widget.helperId ?? '',
     );
 
     if (mounted) {
