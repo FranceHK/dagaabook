@@ -22,6 +22,9 @@ class Sale {
   /// payment can be matched to the SMS/statement later. Empty for cash.
   final String transactionId;
 
+  /// Id of the helper who made this sale; empty when the owner sold it.
+  final String soldBy;
+
   const Sale({
     required this.id,
     required this.stockItemId,
@@ -34,6 +37,7 @@ class Sale {
     required this.amountPaid,
     required this.date,
     this.transactionId = '',
+    this.soldBy = '',
   });
 
   double get totalAmount => magunia * pricePerBag;
@@ -54,6 +58,7 @@ class Sale {
         amountPaid: amountPaid,
         date: date,
         transactionId: transactionId,
+        soldBy: soldBy,
       );
 
   factory Sale.fromJson(Map<String, dynamic> json) => Sale(
@@ -68,6 +73,7 @@ class Sale {
         amountPaid: (json['amount_paid'] as num).toDouble(),
         date: DateTime.parse(json['date']),
         transactionId: json['transaction_id'] ?? '',
+        soldBy: json['sold_by'] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -82,5 +88,6 @@ class Sale {
         'amount_paid': amountPaid,
         'date': date.toIso8601String(),
         'transaction_id': transactionId,
+        'sold_by': soldBy,
       };
 }

@@ -78,6 +78,7 @@ class SalesProvider extends ChangeNotifier {
     required PaymentType paymentType,
     required double amountPaid,
     String transactionId = '',
+    String soldBy = '',
     DateTime? date,
   }) async {
     final sale = Sale(
@@ -92,6 +93,7 @@ class SalesProvider extends ChangeNotifier {
       amountPaid: amountPaid,
       date: date ?? DateTime.now(),
       transactionId: transactionId,
+      soldBy: soldBy,
     );
     _sales.add(sale);
     notifyListeners();
