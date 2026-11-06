@@ -4,8 +4,10 @@ import 'package:amazing_icons/outlined.dart';
 import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_version.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/update_prompt.dart';
 import 'backup_section.dart';
 import 'helpers_section.dart';
 
@@ -76,7 +78,16 @@ class SettingsScreen extends StatelessWidget {
             title: lang.t('about'),
             child: Column(
               children: [
-                _ProfileRow(icon: AmazingIconOutlined.infoCircle, label: lang.t('version'), value: '1.0.0'),
+                _ProfileRow(icon: AmazingIconOutlined.infoCircle, label: lang.t('version'), value: AppVersion.current),
+                const Divider(height: 20),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => UpdatePrompt.check(context),
+                    icon: const Icon(Icons.system_update_outlined, size: 18),
+                    label: Text(lang.t('checkUpdate')),
+                  ),
+                ),
                 const Divider(height: 20),
                 _ProfileRow(icon: AmazingIconOutlined.data, label: lang.t('dataMode'), value: lang.t('localMockData')),
               ],

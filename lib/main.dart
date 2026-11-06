@@ -12,6 +12,7 @@ import 'providers/sync_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/helper/helper_shell.dart';
 import 'screens/main_shell.dart';
+import 'widgets/update_prompt.dart';
 
 void main() {
   runApp(const DagaaBookApp());
@@ -65,7 +66,7 @@ class AuthGate extends StatelessWidget {
     }
 
     if (auth.isLoggedIn) {
-      return auth.isHelper ? const HelperShell() : const MainShell();
+      return UpdatePrompt(child: auth.isHelper ? const HelperShell() : const MainShell());
     }
 
     return const LoginScreen();
