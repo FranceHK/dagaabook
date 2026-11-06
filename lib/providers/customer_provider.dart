@@ -86,10 +86,26 @@ class CustomerProvider extends ChangeNotifier {
     return customer;
   }
 
+  Future<Customer> updateCustomer(
+    String id, {
+    required String name,
+    required String phone,
+    String location = '',
+  }) async {
+    final index = _customers.indexWhere((c) => c.id == id);
+    final updated = _customers[index].copyWith(name: name, phone: phone, location: location);
+    _customers[index] = updated;
+    notifyListeners();
+    await _saveCustomers();
+    return updated;
+  }
+
   Future<void> recordPayment({
     required String customerId,
     required double amount,
     String note = '',
+    String method = 'cash',
+    String transactionId = '',
     DateTime? date,
   }) async {
     _payments.add(Payment(
@@ -98,6 +114,8 @@ class CustomerProvider extends ChangeNotifier {
       amount: amount,
       date: date ?? DateTime.now(),
       note: note,
+      method: method,
+      transactionId: transactionId,
     ));
     notifyListeners();
     await _savePayments();
