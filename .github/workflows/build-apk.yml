@@ -1,0 +1,62 @@
+name: Build APK
+
+# Builds the Android APK. Download it from the run's "Artifacts" section.
+# Pushing a tag like v1.0.0 also attaches the APK to a GitHub Release.
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.6
+          channel: stable
+          cache: true
+
+      - name: Install packages
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: mv build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/dagaabook-$APK_VERSION.apk"
+        env:
+          APK_VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dagaabook-apk
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+
+      - name: Attach APK to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/*.apk
