@@ -41,6 +41,7 @@ class DagaaBookApp extends StatelessWidget {
               ctx.read<SalesProvider>().loadData,
               ctx.read<SettingsProvider>().loadData,
               ctx.read<HelperProvider>().loadData,
+              ctx.read<AuthProvider>().loadData,
             ],
         ),
       ],
