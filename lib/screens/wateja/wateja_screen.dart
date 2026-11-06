@@ -14,7 +14,11 @@ import 'add_customer_sheet.dart';
 import 'customer_detail_screen.dart';
 
 class WatejaScreen extends StatefulWidget {
-  const WatejaScreen({super.key});
+  /// A helper sees the list and can add customers, but not debts or details.
+  final bool helperMode;
+  final List<Widget> actions;
+
+  const WatejaScreen({super.key, this.helperMode = false, this.actions = const []});
 
   @override
   State<WatejaScreen> createState() => _WatejaScreenState();
@@ -41,11 +45,13 @@ class _WatejaScreenState extends State<WatejaScreen> {
       appBar: AppBar(
         title: Text(lang.t('watejaTitle')),
         actions: [
-          IconButton(
-            icon: const Icon(AmazingIconOutlined.receipt),
-            tooltip: lang.t('madeniTitle'),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MadeniScreen())),
-          ),
+          if (!widget.helperMode)
+            IconButton(
+              icon: const Icon(AmazingIconOutlined.receipt),
+              tooltip: lang.t('madeniTitle'),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MadeniScreen())),
+            ),
+          ...widget.actions,
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -91,10 +97,12 @@ class _WatejaScreenState extends State<WatejaScreen> {
                           ),
                           title: Text(cd.customer.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                           subtitle: Text(cd.customer.phone, style: const TextStyle(fontSize: 12.5)),
-                          trailing: DebtBadge(balance: cd.balance, noDebtLabel: lang.t('noDebt')),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => CustomerDetailScreen(customer: cd.customer)),
-                          ),
+                          trailing: widget.helperMode ? null : DebtBadge(balance: cd.balance, noDebtLabel: lang.t('noDebt')),
+                          onTap: widget.helperMode
+                              ? null
+                              : () => Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => CustomerDetailScreen(customer: cd.customer)),
+                                  ),
                         ),
                       );
                     },
