@@ -2,14 +2,23 @@ import 'dart:convert';
 
 import 'package:postgres/postgres.dart';
 
-/// The collections the app backs up. `profile` holds a single record.
-const collections = ['customers', 'payments', 'stock', 'sales', 'profile'];
+/// The collections the app backs up. `profile` holds a single record and
+/// `helpers` holds the helper accounts the owner created.
+const collections = ['customers', 'payments', 'stock', 'sales', 'profile', 'helpers'];
 
 typedef Snapshot = Map<String, List<Map<String, dynamic>>>;
 
 /// Where synced records are kept.
+/// Records are never deleted: the app has no delete, so both phones' data
+/// can be merged by id.
 abstract class SyncStore {
-  Future<void> replaceAll(Snapshot snapshot);
+  /// Saves every record, replacing ones with the same id (owner uploads).
+  Future<void> upsertAll(Snapshot snapshot);
+
+  /// Saves only records whose id is new; existing ones are left alone
+  /// (helper uploads, so a helper can add but never change).
+  Future<void> insertNew(String collection, List<Map<String, dynamic>> records);
+
   Future<Snapshot> loadAll();
   Future<DateTime?> lastUpdated();
 }
@@ -20,8 +29,23 @@ class MemoryStore implements SyncStore {
   DateTime? _updated;
 
   @override
-  Future<void> replaceAll(Snapshot snapshot) async {
-    _data = {for (final c in collections) c: List.of(snapshot[c] ?? [])};
+  Future<void> upsertAll(Snapshot snapshot) async {
+    for (final entry in snapshot.entries) {
+      final list = _data[entry.key]!;
+      for (final record in entry.value) {
+        final i = list.indexWhere((r) => r['id'] == record['id']);
+        i == -1 ? list.add(record) : list[i] = record;
+      }
+    }
+    _updated = DateTime.now().toUtc();
+  }
+
+  @override
+  Future<void> insertNew(String collection, List<Map<String, dynamic>> records) async {
+    final list = _data[collection]!;
+    for (final record in records) {
+      if (!list.any((r) => r['id'] == record['id'])) list.add(record);
+    }
     _updated = DateTime.now().toUtc();
   }
 
@@ -72,19 +96,30 @@ class PostgresStore implements SyncStore {
   }
 
   @override
-  Future<void> replaceAll(Snapshot snapshot) async {
+  Future<void> upsertAll(Snapshot snapshot) async {
     await _pool.runTx((tx) async {
-      for (final collection in collections) {
-        await tx.execute(
-          Sql.named('DELETE FROM records WHERE collection = @c'),
-          parameters: {'c': collection},
-        );
-        for (final record in snapshot[collection] ?? const <Map<String, dynamic>>[]) {
+      for (final entry in snapshot.entries) {
+        for (final record in entry.value) {
           await tx.execute(
-            Sql.named('INSERT INTO records (collection, id, data) VALUES (@c, @id, CAST(@data AS JSONB))'),
-            parameters: {'c': collection, 'id': '${record['id']}', 'data': jsonEncode(record)},
+            Sql.named('INSERT INTO records (collection, id, data) VALUES (@c, @id, CAST(@data AS JSONB)) '
+                'ON CONFLICT (collection, id) DO UPDATE SET data = EXCLUDED.data, updated_at = now() '
+                'WHERE records.data IS DISTINCT FROM EXCLUDED.data'),
+            parameters: {'c': entry.key, 'id': '${record['id']}', 'data': jsonEncode(record)},
           );
         }
+      }
+    });
+  }
+
+  @override
+  Future<void> insertNew(String collection, List<Map<String, dynamic>> records) async {
+    await _pool.runTx((tx) async {
+      for (final record in records) {
+        await tx.execute(
+          Sql.named('INSERT INTO records (collection, id, data) VALUES (@c, @id, CAST(@data AS JSONB)) '
+              'ON CONFLICT (collection, id) DO NOTHING'),
+          parameters: {'c': collection, 'id': '${record['id']}', 'data': jsonEncode(record)},
+        );
       }
     });
   }
