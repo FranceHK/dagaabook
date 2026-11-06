@@ -10,10 +10,10 @@ class SettingsProvider extends ChangeNotifier {
   BusinessProfile get profile => _profile;
 
   SettingsProvider() {
-    _load();
+    loadData();
   }
 
-  Future<void> _load() async {
+  Future<void> loadData() async {
     try {
       final json = await LocalStore.loadMap(LocalStore.profileKey);
       if (json != null) {
