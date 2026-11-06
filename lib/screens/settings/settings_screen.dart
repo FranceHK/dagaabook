@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
+import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_strings.dart';
 import '../../providers/language_provider.dart';
@@ -18,7 +19,7 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(lang.t('settingsTitle'))),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(horizontal: Responsive.sidePadding(context, maxWidth: Responsive.maxFormWidth), vertical: 16),
         children: [
           _SectionCard(
             title: lang.t('businessProfile'),
