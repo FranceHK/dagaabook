@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'core/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/customer_provider.dart';
+import 'providers/helper_provider.dart';
 import 'providers/inventory_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/sales_provider.dart';
@@ -28,6 +29,7 @@ class DagaaBookApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CustomerProvider()),
         ChangeNotifierProvider(create: (_) => SalesProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => HelperProvider()),
         ChangeNotifierProvider(create: (_) => SyncProvider(), lazy: false),
       ],
       child: MaterialApp(
