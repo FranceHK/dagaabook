@@ -92,64 +92,124 @@ class _CustomBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.deepBlue.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: vertical ? const Offset(5, 0) : const Offset(0, -5),
-          ),
-        ],
+    final items = [
+      _NavItem(
+        icon: AmazingIconOutlined.home,
+        label: lang.t('navHome'),
+        isActive: currentIndex == 0,
+        onTap: () => onTap(0),
       ),
-      width: vertical ? Responsive.railWidth : null,
-      child: SafeArea(
-        right: !vertical,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Flex(
-            direction: vertical ? Axis.vertical : Axis.horizontal,
-            mainAxisAlignment: vertical ? MainAxisAlignment.center : MainAxisAlignment.spaceAround,
-            spacing: vertical ? 20 : 0,
-            children: [
-              _NavItem(
-                icon: AmazingIconOutlined.home,
-                label: lang.t('navHome'),
-                isActive: currentIndex == 0,
-                onTap: () => onTap(0),
+      _NavItem(
+        icon: AmazingIconOutlined.bag,
+        label: lang.t('navMizigo'),
+        isActive: currentIndex == 1,
+        onTap: () => onTap(1),
+        badge: mizigoBadge,
+      ),
+      _CenterButton(
+        isActive: currentIndex == 2,
+        onTap: () => onTap(2),
+        icon: AmazingIconOutlined.people,
+        label: lang.t('navWateja'),
+        badge: watejaCount,
+        showLabel: vertical,
+      ),
+      _NavItem(
+        icon: AmazingIconOutlined.receipt,
+        label: lang.t('navMadeni'),
+        isActive: currentIndex == 3,
+        onTap: () => onTap(3),
+        badge: madeniCount,
+      ),
+      _NavItem(
+        icon: AmazingIconOutlined.profile,
+        label: lang.t('navProfile'),
+        isActive: currentIndex == 4,
+        onTap: () => onTap(4),
+      ),
+    ];
+
+    final shadow = [
+      BoxShadow(
+        color: AppColors.deepBlue.withValues(alpha: 0.10),
+        blurRadius: 24,
+        offset: vertical ? const Offset(4, 0) : const Offset(0, -4),
+      ),
+    ];
+
+    // Tablet: a rounded menu card floating on the left.
+    if (vertical) {
+      return SizedBox(
+        width: Responsive.railWidth,
+        child: SafeArea(
+          right: false,
+          child: Center(
+            child: Container(
+              width: Responsive.railWidth - 24,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: shadow,
               ),
-              _NavItem(
-                icon: AmazingIconOutlined.bag,
-                label: lang.t('navMizigo'),
-                isActive: currentIndex == 1,
-                onTap: () => onTap(1),
-                badge: mizigoBadge,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 18,
+                children: items,
               ),
-              _CenterButton(
-                isActive: currentIndex == 2,
-                onTap: () => onTap(2),
-                icon: AmazingIconOutlined.people,
-                label: lang.t('navWateja'),
-                badge: watejaCount,
-              ),
-              _NavItem(
-                icon: AmazingIconOutlined.receipt,
-                label: lang.t('navMadeni'),
-                isActive: currentIndex == 3,
-                onTap: () => onTap(3),
-                badge: madeniCount,
-              ),
-              _NavItem(
-                icon: AmazingIconOutlined.profile,
-                label: lang.t('navProfile'),
-                isActive: currentIndex == 4,
-                onTap: () => onTap(4),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+      );
+    }
+
+    // Phone: a bar with rounded top corners. The Wateja button sits in a
+    // raised circle above the bar; its label stays in the bar below it.
+    const raise = _CenterButton.raisedSize / 2;
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: raise),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: shadow,
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    items[0],
+                    items[1],
+                    SizedBox(
+                      width: 64,
+                      child: Text(
+                        lang.t('navWateja'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: currentIndex == 2 ? FontWeight.w700 : FontWeight.w500,
+                          color: currentIndex == 2 ? AppColors.deepBlue : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    items[3],
+                    items[4],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(top: 0, child: items[2]),
+      ],
     );
   }
 }
@@ -240,11 +300,14 @@ class _NavItem extends StatelessWidget {
 }
 
 class _CenterButton extends StatelessWidget {
+  static const double raisedSize = 58;
+
   final bool isActive;
   final VoidCallback onTap;
   final IconData icon;
   final String label;
   final int badge;
+  final bool showLabel;
 
   const _CenterButton({
     required this.isActive,
@@ -252,72 +315,72 @@ class _CenterButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.badge,
+    this.showLabel = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final circle = AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+      width: raisedSize,
+      height: raisedSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: AppColors.heroGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: isActive ? AppColors.amber : Colors.white, width: 4),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.deepBlue.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Icon(icon, size: 26, color: isActive ? AppColors.amber : Colors.white),
+          if (badge > 0)
+            Positioned(
+              right: -2,
+              top: -2,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: AppColors.danger,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                child: Text(
+                  badge > 99 ? '99+' : '$badge',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 64,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: isActive
-                    ? const LinearGradient(colors: AppColors.heroGradient)
-                    : null,
-                color: isActive ? null : AppColors.deepBlue.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: isActive
-                    ? [
-                        BoxShadow(
-                          color: AppColors.deepBlue.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Icon(
-                    icon,
-                    size: 26,
-                    color: isActive ? Colors.white : AppColors.deepBlue,
-                  ),
-                  if (badge > 0)
-                    Positioned(
-                      right: -8,
-                      top: -8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: AppColors.danger,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                        child: Text(
-                          badge > 99 ? '99+' : '$badge',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          circle,
+          if (showLabel) ...[
+            const SizedBox(height: 6),
             Text(
               label,
               style: TextStyle(
@@ -328,7 +391,7 @@ class _CenterButton extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ],
-        ),
+        ],
       ),
     );
   }
