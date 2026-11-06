@@ -6,6 +6,7 @@ import '../../core/app_colors.dart';
 import '../../core/app_strings.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/settings_provider.dart';
+import 'backup_section.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -65,6 +66,8 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          _SectionCard(title: lang.t('backupTitle'), child: const BackupSection()),
           const SizedBox(height: 16),
           _SectionCard(
             title: lang.t('about'),
