@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
+import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/debt_calculator.dart';
 import '../../core/formatters.dart';
@@ -51,7 +52,7 @@ class RipotiScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(lang.t('ripotiTitle'))),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context), 16, Responsive.sidePadding(context), 24),
         children: [
           SectionTitle(title: '${lang.t('profitSummary')} • ${lang.t('last7Days')}'),
           const SizedBox(height: 10),
