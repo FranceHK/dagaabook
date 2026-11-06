@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_colors.dart';
+import '../../core/formatters.dart';
 import '../../providers/inventory_provider.dart';
 import '../../providers/language_provider.dart';
 
@@ -96,6 +97,17 @@ class _AddStockSheetState extends State<AddStockSheet> {
                   ],
                 ),
                 const SizedBox(height: 12),
+                // Recomputes as the owner types quantity and prices.
+                ListenableBuilder(
+                  listenable: Listenable.merge([_maguniaController, _purchasePriceController, _sellingPriceController]),
+                  builder: (context, _) => _ProfitPreview(
+                    boxes: int.tryParse(_maguniaController.text) ?? 0,
+                    buyPrice: double.tryParse(_purchasePriceController.text) ?? 0,
+                    sellPrice: double.tryParse(_sellingPriceController.text) ?? 0,
+                    lang: lang,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _supplierController,
                   decoration: InputDecoration(labelText: '${lang.t('supplier')} (${lang.t('optional')})'),
@@ -127,5 +139,51 @@ class _AddStockSheetState extends State<AddStockSheet> {
       final lang = context.read<LanguageProvider>();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(lang.t('stockAdded'))));
     }
+  }
+}
+
+class _ProfitPreview extends StatelessWidget {
+  final int boxes;
+  final double buyPrice;
+  final double sellPrice;
+  final LanguageProvider lang;
+
+  const _ProfitPreview({required this.boxes, required this.buyPrice, required this.sellPrice, required this.lang});
+
+  @override
+  Widget build(BuildContext context) {
+    final perBox = sellPrice - buyPrice;
+    final totalCost = boxes * buyPrice;
+    final totalSales = boxes * sellPrice;
+    final totalProfit = boxes * perBox;
+    final color = totalProfit < 0 ? AppColors.danger : AppColors.success;
+
+    Widget row(String label, String value, {bool bold = false, Color? valueColor}) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Row(
+            children: [
+              Expanded(child: Text(label, style: TextStyle(fontSize: 13, fontWeight: bold ? FontWeight.w700 : FontWeight.w500))),
+              Text(value, style: TextStyle(fontSize: bold ? 16 : 13, fontWeight: FontWeight.w700, color: valueColor)),
+            ],
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          row(lang.t('totalCost'), AppFormatters.money(totalCost)),
+          row(lang.t('expectedSales'), AppFormatters.money(totalSales)),
+          row(lang.t('profitPerBag'), AppFormatters.money(perBox), valueColor: color),
+          const Divider(height: 14),
+          row(lang.t('totalExpectedProfit'), AppFormatters.money(totalProfit), bold: true, valueColor: color),
+        ],
+      ),
+    );
   }
 }
