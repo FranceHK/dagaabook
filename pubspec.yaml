@@ -37,7 +37,6 @@ dependencies:
   provider: ^6.1.2
   intl: ^0.19.0
   fl_chart: ^0.69.0
-  http: ^1.2.1
   shared_preferences: ^2.2.3
   amazing_icons: ^3.1.1
 
