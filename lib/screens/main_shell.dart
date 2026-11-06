@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
 import '../core/app_colors.dart';
 import '../core/debt_calculator.dart';
+import '../core/responsive.dart';
 import '../providers/customer_provider.dart';
 import '../providers/inventory_provider.dart';
 import '../providers/language_provider.dart';
@@ -40,28 +41,32 @@ class _MainShellState extends State<MainShell> {
       customers.payments,
     ).where((cd) => cd.hasDebt).length;
 
+    final nav = _CustomBottomNav(
+      currentIndex: _index,
+      onTap: goToTab,
+      lang: lang,
+      mizigoBadge: mizigoBadge,
+      watejaCount: watejaCount,
+      madeniCount: madeniCount,
+      vertical: Responsive.isTablet(context),
+    );
+    final body = IndexedStack(
+      index: _index,
+      children: const [
+        DashboardScreen(),
+        MizigoScreen(),
+        WatejaScreen(),
+        MadeniScreen(),
+        ProfileScreen(),
+      ],
+    );
+
+    // Tablets get the menu down the left side; phones keep it at the bottom.
     return MainShellController(
       goToTab: goToTab,
-      child: Scaffold(
-        body: IndexedStack(
-          index: _index,
-          children: const [
-            DashboardScreen(),
-            MizigoScreen(),
-            WatejaScreen(),
-            MadeniScreen(),
-            ProfileScreen(),
-          ],
-        ),
-        bottomNavigationBar: _CustomBottomNav(
-          currentIndex: _index,
-          onTap: goToTab,
-          lang: lang,
-          mizigoBadge: mizigoBadge,
-          watejaCount: watejaCount,
-          madeniCount: madeniCount,
-        ),
-      ),
+      child: Responsive.isTablet(context)
+          ? Scaffold(body: Row(children: [nav, Expanded(child: body)]))
+          : Scaffold(body: body, bottomNavigationBar: nav),
     );
   }
 }
@@ -73,6 +78,7 @@ class _CustomBottomNav extends StatelessWidget {
   final int mizigoBadge;
   final int watejaCount;
   final int madeniCount;
+  final bool vertical;
 
   const _CustomBottomNav({
     required this.currentIndex,
@@ -81,6 +87,7 @@ class _CustomBottomNav extends StatelessWidget {
     required this.mizigoBadge,
     required this.watejaCount,
     required this.madeniCount,
+    this.vertical = false,
   });
 
   @override
@@ -92,15 +99,19 @@ class _CustomBottomNav extends StatelessWidget {
           BoxShadow(
             color: AppColors.deepBlue.withValues(alpha: 0.08),
             blurRadius: 20,
-            offset: const Offset(0, -5),
+            offset: vertical ? const Offset(5, 0) : const Offset(0, -5),
           ),
         ],
       ),
+      width: vertical ? Responsive.railWidth : null,
       child: SafeArea(
+        right: !vertical,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          child: Flex(
+            direction: vertical ? Axis.vertical : Axis.horizontal,
+            mainAxisAlignment: vertical ? MainAxisAlignment.center : MainAxisAlignment.spaceAround,
+            spacing: vertical ? 20 : 0,
             children: [
               _NavItem(
                 icon: AmazingIconOutlined.home,
