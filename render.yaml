@@ -1,0 +1,17 @@
+# Render Blueprint for the DagaaBook sync server.
+# Secrets are not stored here: Render asks for DATABASE_URL and SYNC_KEY
+# when the blueprint is first applied (sync: false).
+services:
+  - type: web
+    name: dagaabook-sync
+    runtime: docker
+    plan: free
+    rootDir: server
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SYNC_KEY
+        sync: false
