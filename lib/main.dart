@@ -10,6 +10,7 @@ import 'providers/sales_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/sync_provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/helper/helper_shell.dart';
 import 'screens/main_shell.dart';
 
 void main() {
@@ -30,7 +31,17 @@ class DagaaBookApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SalesProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => HelperProvider()),
-        ChangeNotifierProvider(create: (_) => SyncProvider(), lazy: false),
+        ChangeNotifierProvider(
+          lazy: false,
+          create: (ctx) => SyncProvider()
+            ..reloaders = [
+              ctx.read<CustomerProvider>().loadData,
+              ctx.read<InventoryProvider>().loadData,
+              ctx.read<SalesProvider>().loadData,
+              ctx.read<SettingsProvider>().loadData,
+              ctx.read<HelperProvider>().loadData,
+            ],
+        ),
       ],
       child: MaterialApp(
         title: 'DagaaBook',
@@ -54,7 +65,7 @@ class AuthGate extends StatelessWidget {
     }
 
     if (auth.isLoggedIn) {
-      return const MainShell();
+      return auth.isHelper ? const HelperShell() : const MainShell();
     }
 
     return const LoginScreen();

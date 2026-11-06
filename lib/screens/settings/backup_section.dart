@@ -3,11 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_colors.dart';
 import '../../core/formatters.dart';
-import '../../providers/customer_provider.dart';
-import '../../providers/inventory_provider.dart';
 import '../../providers/language_provider.dart';
-import '../../providers/sales_provider.dart';
-import '../../providers/settings_provider.dart';
 import '../../providers/sync_provider.dart';
 import '../profile/edit_profile_sheet.dart';
 
@@ -92,26 +88,12 @@ class BackupSection extends StatelessWidget {
         ),
         if (sync.isConfigured) ...[
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: sync.isBusy ? null : () => _syncNow(context),
-                  icon: sync.isBusy
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.cloud_upload_outlined, size: 18),
-                  label: Text(lang.t('syncNow')),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: sync.isBusy ? null : () => _restore(context),
-                  icon: const Icon(Icons.cloud_download_outlined, size: 18),
-                  label: Text(lang.t('restoreBackup'), textAlign: TextAlign.center),
-                ),
-              ),
-            ],
+          ElevatedButton.icon(
+            onPressed: sync.isBusy ? null : () => _syncNow(context),
+            icon: sync.isBusy
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.cloud_sync_outlined, size: 18),
+            label: Text(lang.t('syncNow')),
           ),
         ],
       ],
@@ -124,35 +106,6 @@ class BackupSection extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     final ok = await sync.syncNow();
     messenger.showSnackBar(SnackBar(content: Text(ok ? lang.t('syncDone') : errorText(lang, sync.error ?? ''))));
-  }
-
-  Future<void> _restore(BuildContext context) async {
-    final lang = context.read<LanguageProvider>();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(lang.t('restoreBackup')),
-        content: Text(lang.t('restoreConfirm')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(lang.t('cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(lang.t('yes'))),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    final sync = context.read<SyncProvider>();
-    final customers = context.read<CustomerProvider>();
-    final inventory = context.read<InventoryProvider>();
-    final sales = context.read<SalesProvider>();
-    final settings = context.read<SettingsProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-
-    final ok = await sync.restore();
-    if (ok) {
-      await Future.wait([customers.loadData(), inventory.loadData(), sales.loadData(), settings.loadData()]);
-    }
-    messenger.showSnackBar(SnackBar(content: Text(ok ? lang.t('restoreDone') : errorText(lang, sync.error ?? ''))));
   }
 }
 
