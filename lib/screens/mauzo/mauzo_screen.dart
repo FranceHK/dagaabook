@@ -5,6 +5,7 @@ import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/formatters.dart';
 import '../../models/sale.dart';
+import '../../providers/helper_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/sales_provider.dart';
 import '../../widgets/empty_state.dart';
@@ -105,6 +106,7 @@ class _SaleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = sale.paymentType;
+    final helperName = sale.soldBy.isEmpty ? '' : context.watch<HelperProvider>().nameOf(sale.soldBy);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: Card(
@@ -117,7 +119,8 @@ class _SaleCard extends StatelessWidget {
           title: Text(sale.customerName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
           subtitle: Text(
             '${sale.magunia} ${lang.t('magunia')} @ ${AppFormatters.money(sale.pricePerBag)} • ${AppFormatters.dateShort(sale.date)}'
-            '${sale.transactionId.isNotEmpty ? '\n${lang.t('transactionShort')}: ${sale.transactionId}' : ''}',
+            '${sale.transactionId.isNotEmpty ? '\n${lang.t('transactionShort')}: ${sale.transactionId}' : ''}'
+            '${helperName.isNotEmpty ? '\n${lang.t('soldByLabel')}: $helperName' : ''}',
             style: const TextStyle(fontSize: 12),
           ),
           trailing: Column(
