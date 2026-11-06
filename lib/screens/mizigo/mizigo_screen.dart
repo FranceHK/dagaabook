@@ -7,6 +7,7 @@ import '../../core/formatters.dart';
 import '../../models/stock_item.dart';
 import '../../providers/inventory_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/sales_provider.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/summary_card.dart';
 import '../main_shell.dart';
@@ -30,6 +31,8 @@ class MizigoScreen extends StatelessWidget {
     final lang = context.watch<LanguageProvider>();
     final inventory = context.watch<InventoryProvider>();
     final items = inventory.items;
+    final sales = context.watch<SalesProvider>().sales;
+    final profitEarned = items.fold(0.0, (sum, item) => sum + item.profitEarned(sales));
 
     return Scaffold(
       appBar: AppBar(
@@ -54,24 +57,33 @@ class MizigoScreen extends StatelessWidget {
       body: ListView(
         padding: EdgeInsets.fromLTRB(Responsive.sidePadding(context), 16, Responsive.sidePadding(context), 90),
         children: [
-          Row(
+          GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: Responsive.isTablet(context) ? 3 : 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              mainAxisExtent: 136,
+            ),
             children: [
-              Expanded(
-                child: SummaryCard(
+              SummaryCard(
                   label: lang.t('remainingBags'),
                   value: '${inventory.totalMaguniaRemaining} ${lang.t('magunia')}',
                   subtitle: '${inventory.totalMaguniaIn} ${lang.t('totalBags').toLowerCase()}',
                   icon: AmazingIconOutlined.bag,
-                ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SummaryCard(
+              SummaryCard(
                   label: lang.t('totalStockValue'),
                   value: AppFormatters.money(inventory.totalStockValue),
                   icon: AmazingIconOutlined.wallet,
                   accentColor: AppColors.amberDark,
-                ),
+              ),
+              SummaryCard(
+                  label: lang.t('profitEarned'),
+                  value: AppFormatters.money(profitEarned),
+                  icon: AmazingIconOutlined.trendUp,
+                  accentColor: profitEarned < 0 ? AppColors.danger : AppColors.success,
               ),
             ],
           ),
@@ -79,7 +91,7 @@ class MizigoScreen extends StatelessWidget {
           if (items.isEmpty)
             EmptyState(icon: AmazingIconOutlined.bag, message: lang.t('noStock'))
           else
-            for (final item in items) _StockCard(item: item, lang: lang),
+            for (final item in items) _StockCard(item: item, lang: lang, profitEarned: item.profitEarned(sales)),
         ],
       ),
     );
@@ -89,8 +101,9 @@ class MizigoScreen extends StatelessWidget {
 class _StockCard extends StatelessWidget {
   final StockItem item;
   final LanguageProvider lang;
+  final double profitEarned;
 
-  const _StockCard({required this.item, required this.lang});
+  const _StockCard({required this.item, required this.lang, required this.profitEarned});
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +141,21 @@ class _StockCard extends StatelessWidget {
                   _StockStat(label: lang.t('purchasePricePerBag'), value: AppFormatters.money(item.purchasePricePerBag)),
                   _StockStat(label: lang.t('sellingPricePerBag'), value: AppFormatters.money(item.sellingPricePerBag)),
                 ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    _StockStat(label: lang.t('profitPerBag'), value: AppFormatters.money(item.profitPerBag), color: _profitColor(item.profitPerBag)),
+                    _StockStat(label: lang.t('profitEarned'), value: AppFormatters.money(profitEarned), color: _profitColor(profitEarned)),
+                    _StockStat(label: lang.t('profitExpected'), value: AppFormatters.money(item.remainingMagunia * item.profitPerBag), color: _profitColor(item.profitPerBag)),
+                  ],
+                ),
               ),
               const Divider(height: 24),
               Row(
@@ -170,11 +198,14 @@ class _StockCard extends StatelessWidget {
   }
 }
 
+Color _profitColor(double v) => v < 0 ? AppColors.danger : AppColors.success;
+
 class _StockStat extends StatelessWidget {
   final String label;
   final String value;
+  final Color? color;
 
-  const _StockStat({required this.label, required this.value});
+  const _StockStat({required this.label, required this.value, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +215,7 @@ class _StockStat extends StatelessWidget {
         children: [
           Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
           const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
         ],
       ),
     );
