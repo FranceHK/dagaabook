@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Saves the app's data on this device only. There is no server or account:
-/// everything belongs to the one person using the phone.
+/// Saves the app's data on this device. Everything belongs to the one person
+/// using the phone; a backup can be sent to the sync server (see SyncService).
 class LocalStore {
   LocalStore._();
 
@@ -15,6 +15,21 @@ class LocalStore {
   static const loginPhoneKey = 'login_phone';
   static const loginPasswordKey = 'login_password';
   static const loggedInKey = 'logged_in';
+  static const syncUrlKey = 'sync_url';
+  static const syncSecretKey = 'sync_key';
+  static const lastSyncKey = 'last_sync';
+  static const syncAutoKey = 'sync_auto';
+  static const syncPendingKey = 'sync_pending';
+
+  /// The keys whose changes should be backed up.
+  static const dataKeys = {customersKey, paymentsKey, stockKey, salesKey, profileKey};
+
+  /// Called after business data is saved, so a backup can follow.
+  static void Function()? onDataChanged;
+
+  static void _changed(String key) {
+    if (dataKeys.contains(key)) onDataChanged?.call();
+  }
 
   static Future<List<T>> loadList<T>(
     String key,
@@ -27,9 +42,10 @@ class LocalStore {
     return data.map((e) => fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  static Future<void> saveList(String key, List<Map<String, dynamic>> items) async {
+  static Future<void> saveList(String key, List<Map<String, dynamic>> items, {bool notify = true}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, jsonEncode(items));
+    if (notify) _changed(key);
   }
 
   static Future<Map<String, dynamic>?> loadMap(String key) async {
@@ -38,9 +54,10 @@ class LocalStore {
     return raw == null ? null : jsonDecode(raw) as Map<String, dynamic>;
   }
 
-  static Future<void> saveMap(String key, Map<String, dynamic> value) async {
+  static Future<void> saveMap(String key, Map<String, dynamic> value, {bool notify = true}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, jsonEncode(value));
+    if (notify) _changed(key);
   }
 
   static Future<String?> loadString(String key) async {
@@ -51,6 +68,11 @@ class LocalStore {
   static Future<void> saveString(String key, String value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, value);
+  }
+
+  static Future<void> remove(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(key);
   }
 
   /// A unique id for a new record, based on the current time.
