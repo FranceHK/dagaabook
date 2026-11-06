@@ -4,6 +4,7 @@ import 'package:amazing_icons/outlined.dart';
 import '../../core/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import 'helper_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -124,6 +125,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ElevatedButton(
                     onPressed: _submit,
                     child: Text(lang.t('loginButton')),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const HelperLoginScreen()),
+                    ),
+                    child: Text(lang.t('helperLoginLink')),
                   ),
                 ],
               ),
