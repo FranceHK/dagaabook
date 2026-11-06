@@ -1,148 +1,69 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user.dart';
-import '../services/api_service.dart';
+import '../core/app_owner.dart';
+import '../services/local_store.dart';
 
+/// Login for the app's single owner. Checked on the phone itself, so it
+/// works with or without internet. The session is remembered until logout.
 class AuthProvider extends ChangeNotifier {
-  User? _user;
-  bool _isLoading = false;
+  bool _isLoggedIn = false;
+  bool _isLoaded = false;
+  String _phone = AppOwner.defaultPhone;
+  String _password = AppOwner.defaultPassword;
   String? _error;
 
-  User? get user => _user;
-  bool get isLoading => _isLoading;
-  bool get isLoggedIn => _user != null;
+  bool get isLoggedIn => _isLoggedIn;
+  bool get isLoaded => _isLoaded;
+  String get phone => _phone;
   String? get error => _error;
 
   AuthProvider() {
-    _loadSavedUser();
+    _load();
   }
 
-  Future<void> _loadSavedUser() async {
+  Future<void> _load() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userJson = prefs.getString('user');
-      if (userJson != null) {
-        _user = User.fromJson(jsonDecode(userJson));
-        notifyListeners();
-      }
+      _phone = await LocalStore.loadString(LocalStore.loginPhoneKey) ?? AppOwner.defaultPhone;
+      _password = await LocalStore.loadString(LocalStore.loginPasswordKey) ?? AppOwner.defaultPassword;
+      _isLoggedIn = await LocalStore.loadString(LocalStore.loggedInKey) == 'true';
     } catch (_) {}
+    _isLoaded = true;
+    notifyListeners();
   }
 
-  Future<void> _saveUser(User user) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user', jsonEncode(user.toJson()));
-  }
+  static String _digits(String s) => s.replaceAll(RegExp(r'\D'), '');
 
-  Future<void> _clearUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user');
-  }
-
-  Future<bool> login({
-    required String phone,
-    required String password,
-  }) async {
-    _isLoading = true;
+  Future<bool> login({required String phone, required String password}) async {
     _error = null;
-    notifyListeners();
-
-    try {
-      if (await ApiService.checkConnection()) {
-        final response = await http.post(
-          Uri.parse('${ApiService.baseUrl}/api/auth/login'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'phone': phone, 'password': password}),
-        ).timeout(ApiService.timeout);
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          _user = User.fromJson(data['user']);
-          await _saveUser(_user!);
-          _isLoading = false;
-          notifyListeners();
-          return true;
-        } else {
-          final data = jsonDecode(response.body);
-          _error = data['error'] ?? 'Login imeshindwa';
-        }
-      } else {
-        _error = 'Haijaungana na server. Tumia mode ya ndani.';
-      }
-    } catch (e) {
-      _error = 'Hitilafu imetokea. Jaribu tena.';
+    if (_digits(phone) != _digits(_phone) || password != _password) {
+      _error = 'Namba ya simu au nywila si sahihi';
+      notifyListeners();
+      return false;
     }
-
-    _isLoading = false;
+    _isLoggedIn = true;
     notifyListeners();
-    return false;
+    await LocalStore.saveString(LocalStore.loggedInKey, 'true');
+    return true;
   }
 
-  Future<bool> register({
-    required String firstName,
-    required String lastName,
-    required String email,
-    required String phone,
-    required String password,
+  /// Returns false when [currentPassword] is wrong.
+  Future<bool> changeLogin({
+    required String currentPassword,
+    required String newPhone,
+    required String newPassword,
   }) async {
-    _isLoading = true;
-    _error = null;
+    if (currentPassword != _password) return false;
+    _phone = newPhone;
+    _password = newPassword;
     notifyListeners();
-
-    try {
-      if (await ApiService.checkConnection()) {
-        final response = await http.post(
-          Uri.parse('${ApiService.baseUrl}/api/auth/register'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'first_name': firstName,
-            'last_name': lastName,
-            'email': email,
-            'phone': phone,
-            'password': password,
-          }),
-        ).timeout(ApiService.timeout);
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          _user = User.fromJson(data['user']);
-          await _saveUser(_user!);
-          _isLoading = false;
-          notifyListeners();
-          return true;
-        } else {
-          final data = jsonDecode(response.body);
-          _error = data['error'] ?? 'Usajili umeshindwa';
-        }
-      } else {
-        _error = 'Haijaungana na server. Tumia mode ya ndani.';
-      }
-    } catch (e) {
-      _error = 'Hitilafu imetokea. Jaribu tena.';
-    }
-
-    _isLoading = false;
-    notifyListeners();
-    return false;
-  }
-
-  void loginLocal({required String firstName, required String lastName, String phone = ''}) {
-    _user = User(
-      id: 'local_user',
-      firstName: firstName.isNotEmpty ? firstName : 'Mtumiaji',
-      lastName: lastName,
-      phone: phone.isNotEmpty ? phone : '0700 000 000',
-      createdAt: DateTime.now(),
-    );
-    _saveUser(_user!);
-    notifyListeners();
+    await LocalStore.saveString(LocalStore.loginPhoneKey, newPhone);
+    await LocalStore.saveString(LocalStore.loginPasswordKey, newPassword);
+    return true;
   }
 
   Future<void> logout() async {
-    _user = null;
+    _isLoggedIn = false;
     _error = null;
-    await _clearUser();
     notifyListeners();
+    await LocalStore.saveString(LocalStore.loggedInKey, 'false');
   }
 }
