@@ -18,6 +18,10 @@ class Sale {
   final double amountPaid;
   final DateTime date;
 
+  /// Reference of the mobile money transaction (M-Pesa, Tigo Pesa...), so a
+  /// payment can be matched to the SMS/statement later. Empty for cash.
+  final String transactionId;
+
   const Sale({
     required this.id,
     required this.stockItemId,
@@ -29,6 +33,7 @@ class Sale {
     required this.paymentType,
     required this.amountPaid,
     required this.date,
+    this.transactionId = '',
   });
 
   double get totalAmount => magunia * pricePerBag;
@@ -36,6 +41,20 @@ class Sale {
   double get outstanding => (totalAmount - amountPaid).clamp(0, double.infinity);
 
   bool get isFullyPaid => outstanding <= 0.001;
+
+  Sale copyWith({String? customerName}) => Sale(
+        id: id,
+        stockItemId: stockItemId,
+        stockType: stockType,
+        customerId: customerId,
+        customerName: customerName ?? this.customerName,
+        magunia: magunia,
+        pricePerBag: pricePerBag,
+        paymentType: paymentType,
+        amountPaid: amountPaid,
+        date: date,
+        transactionId: transactionId,
+      );
 
   factory Sale.fromJson(Map<String, dynamic> json) => Sale(
         id: json['id'],
@@ -48,6 +67,7 @@ class Sale {
         paymentType: PaymentType.values.byName(json['payment_type']),
         amountPaid: (json['amount_paid'] as num).toDouble(),
         date: DateTime.parse(json['date']),
+        transactionId: json['transaction_id'] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -61,5 +81,6 @@ class Sale {
         'payment_type': paymentType.name,
         'amount_paid': amountPaid,
         'date': date.toIso8601String(),
+        'transaction_id': transactionId,
       };
 }
