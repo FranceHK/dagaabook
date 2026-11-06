@@ -172,4 +172,28 @@ void main() {
     }));
     expect((await handler(_req('GET', '/snapshot', token: token))).statusCode, 401);
   });
+
+  test('older owner login does not overwrite a newer one', () async {
+    Future<Response> upload(String phone, String updatedAt) async => handler(_req('POST', '/sync', body: {
+          'account': [
+            {'id': 'owner', 'phone': phone, 'updated_at': updatedAt}
+          ],
+        }));
+    await upload('0711000000', '2026-11-06T10:00:00.000Z');
+    await upload('0700000000', '1970-01-01T00:00:00.000Z');
+    final data = (await _body(await handler(_req('GET', '/snapshot'))))['data'] as Map<String, dynamic>;
+    expect((data['account'] as List).single['phone'], '0711000000');
+  });
+
+  test('helper never sees the owner login', () async {
+    await ownerSeed();
+    await handler(_req('POST', '/sync', body: {
+      'account': [
+        {'id': 'owner', 'phone': '0711000000'}
+      ],
+    }));
+    final token = await helperLogin();
+    final data = (await _body(await handler(_req('GET', '/snapshot', token: token))))['data'] as Map<String, dynamic>;
+    expect(data.containsKey('account'), isFalse);
+  });
 }

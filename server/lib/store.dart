@@ -2,9 +2,18 @@ import 'dart:convert';
 
 import 'package:postgres/postgres.dart';
 
-/// The collections the app backs up. `profile` holds a single record and
-/// `helpers` holds the helper accounts the owner created.
-const collections = ['customers', 'payments', 'stock', 'sales', 'profile', 'helpers'];
+/// The collections the app backs up. `profile` and `account` (the owner's
+/// login) hold a single record each; `helpers` holds the helper accounts.
+const collections = ['customers', 'payments', 'stock', 'sales', 'profile', 'helpers', 'account'];
+
+/// Records with an `updated_at` are only replaced by a newer copy, so a login
+/// changed in the database isn't overwritten by an older phone.
+bool isNotOlder(Map<String, dynamic> incoming, Map<String, dynamic> existing) {
+  final a = incoming['updated_at'];
+  final b = existing['updated_at'];
+  if (a is! String || b is! String) return true;
+  return a.compareTo(b) >= 0;
+}
 
 typedef Snapshot = Map<String, List<Map<String, dynamic>>>;
 
@@ -34,7 +43,11 @@ class MemoryStore implements SyncStore {
       final list = _data[entry.key]!;
       for (final record in entry.value) {
         final i = list.indexWhere((r) => r['id'] == record['id']);
-        i == -1 ? list.add(record) : list[i] = record;
+        if (i == -1) {
+          list.add(record);
+        } else if (isNotOlder(record, list[i])) {
+          list[i] = record;
+        }
       }
     }
     _updated = DateTime.now().toUtc();
@@ -103,7 +116,9 @@ class PostgresStore implements SyncStore {
           await tx.execute(
             Sql.named('INSERT INTO records (collection, id, data) VALUES (@c, @id, CAST(@data AS JSONB)) '
                 'ON CONFLICT (collection, id) DO UPDATE SET data = EXCLUDED.data, updated_at = now() '
-                'WHERE records.data IS DISTINCT FROM EXCLUDED.data'),
+                'WHERE records.data IS DISTINCT FROM EXCLUDED.data '
+                "AND (EXCLUDED.data->>'updated_at' IS NULL OR records.data->>'updated_at' IS NULL "
+                "OR EXCLUDED.data->>'updated_at' >= records.data->>'updated_at')"),
             parameters: {'c': entry.key, 'id': '${record['id']}', 'data': jsonEncode(record)},
           );
         }
