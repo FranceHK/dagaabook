@@ -4,6 +4,7 @@ import 'package:amazing_icons/outlined.dart';
 import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
 import '../../core/formatters.dart';
+import '../../core/transaction_ids.dart';
 import '../../models/customer.dart';
 import '../../models/sale.dart';
 import '../../models/stock_item.dart';
@@ -29,6 +30,7 @@ class _SellStockScreenState extends State<SellStockScreen> {
   final _formKey = GlobalKey<FormState>();
   final _maguniaController = TextEditingController();
   final _partialAmountController = TextEditingController();
+  final _transactionController = TextEditingController();
   late TextEditingController _customerNameController;
 
   Customer? _selectedCustomer;
@@ -42,6 +44,7 @@ class _SellStockScreenState extends State<SellStockScreen> {
   void dispose() {
     _maguniaController.dispose();
     _partialAmountController.dispose();
+    _transactionController.dispose();
     super.dispose();
   }
 
@@ -220,6 +223,28 @@ class _SellStockScreenState extends State<SellStockScreen> {
                 },
               ),
             ],
+            if (_paymentType == PaymentType.mobile || _paymentType == PaymentType.partial) ...[
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _transactionController,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  labelText: _paymentType == PaymentType.mobile
+                      ? lang.t('transactionId')
+                      : '${lang.t('transactionId')} (${lang.t('ifPaidByPhone')})',
+                  hintText: lang.t('transactionIdHint'),
+                  prefixIcon: const Icon(AmazingIconOutlined.receiptText, size: 20),
+                ),
+                validator: (v) {
+                  final id = (v ?? '').trim();
+                  if (_paymentType == PaymentType.mobile && id.isEmpty) return lang.t('transactionIdRequired');
+                  final sales = context.read<SalesProvider>().sales;
+                  final payments = context.read<CustomerProvider>().payments;
+                  if (TransactionIds.isUsed(id, sales, payments)) return lang.t('transactionIdUsed');
+                  return null;
+                },
+              ),
+            ],
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _submit,
@@ -272,6 +297,9 @@ class _SellStockScreenState extends State<SellStockScreen> {
       pricePerBag: widget.stockItem.sellingPricePerBag,
       paymentType: _paymentType,
       amountPaid: amountPaid,
+      transactionId: _paymentType == PaymentType.mobile || _paymentType == PaymentType.partial
+          ? TransactionIds.normalize(_transactionController.text)
+          : '',
     );
 
     if (mounted) {
