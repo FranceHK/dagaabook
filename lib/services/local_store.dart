@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Saves the app's data on this device. Everything belongs to the one person
@@ -15,6 +16,10 @@ class LocalStore {
   static const loginPhoneKey = 'login_phone';
   static const loginPasswordKey = 'login_password';
   static const loggedInKey = 'logged_in';
+  static const helpersKey = 'helpers';
+  static const roleKey = 'role';
+  static const helperIdKey = 'helper_id';
+  static const helperNameKey = 'helper_name';
   static const syncUrlKey = 'sync_url';
   static const syncSecretKey = 'sync_key';
   static const lastSyncKey = 'last_sync';
@@ -22,7 +27,7 @@ class LocalStore {
   static const syncPendingKey = 'sync_pending';
 
   /// The keys whose changes should be backed up.
-  static const dataKeys = {customersKey, paymentsKey, stockKey, salesKey, profileKey};
+  static const dataKeys = {customersKey, paymentsKey, stockKey, salesKey, profileKey, helpersKey};
 
   /// Called after business data is saved, so a backup can follow.
   static void Function()? onDataChanged;
@@ -75,6 +80,10 @@ class LocalStore {
     await prefs.remove(key);
   }
 
-  /// A unique id for a new record, based on the current time.
-  static String newId(String prefix) => '${prefix}_${DateTime.now().microsecondsSinceEpoch}';
+  static final _random = Random();
+
+  /// A unique id for a new record. The random part keeps ids from two phones
+  /// (owner and helper) apart even when made at the same moment.
+  static String newId(String prefix) =>
+      '${prefix}_${DateTime.now().microsecondsSinceEpoch}_${_random.nextInt(1 << 32).toRadixString(36)}';
 }
