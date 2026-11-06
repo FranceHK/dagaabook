@@ -3,12 +3,16 @@ import 'package:provider/provider.dart';
 import 'core/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/customer_provider.dart';
+import 'providers/helper_provider.dart';
 import 'providers/inventory_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/sales_provider.dart';
 import 'providers/settings_provider.dart';
+import 'providers/sync_provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/helper/helper_shell.dart';
 import 'screens/main_shell.dart';
+import 'widgets/update_prompt.dart';
 
 void main() {
   runApp(const DagaaBookApp());
@@ -27,6 +31,19 @@ class DagaaBookApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CustomerProvider()),
         ChangeNotifierProvider(create: (_) => SalesProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => HelperProvider()),
+        ChangeNotifierProvider(
+          lazy: false,
+          create: (ctx) => SyncProvider()
+            ..reloaders = [
+              ctx.read<CustomerProvider>().loadData,
+              ctx.read<InventoryProvider>().loadData,
+              ctx.read<SalesProvider>().loadData,
+              ctx.read<SettingsProvider>().loadData,
+              ctx.read<HelperProvider>().loadData,
+              ctx.read<AuthProvider>().loadData,
+            ],
+        ),
       ],
       child: MaterialApp(
         title: 'DagaaBook',
@@ -50,7 +67,7 @@ class AuthGate extends StatelessWidget {
     }
 
     if (auth.isLoggedIn) {
-      return const MainShell();
+      return UpdatePrompt(child: auth.isHelper ? const HelperShell() : const MainShell());
     }
 
     return const LoginScreen();

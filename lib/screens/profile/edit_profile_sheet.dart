@@ -6,11 +6,12 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/settings_provider.dart';
 
-class _SheetFrame extends StatelessWidget {
+/// Rounded bottom-sheet frame with a drag handle and title.
+class SheetFrame extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const _SheetFrame({required this.title, required this.child});
+  const SheetFrame({super.key, required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +78,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     final lang = context.watch<LanguageProvider>();
     String? required(String? v) => (v == null || v.trim().isEmpty) ? lang.t('required') : null;
 
-    return _SheetFrame(
+    return SheetFrame(
       title: lang.t('editProfile'),
       child: Form(
         key: _formKey,
@@ -155,7 +156,7 @@ class _ChangeLoginSheetState extends State<ChangeLoginSheet> {
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>();
 
-    return _SheetFrame(
+    return SheetFrame(
       title: lang.t('changeLogin'),
       child: Form(
         key: _formKey,

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_colors.dart';
 import '../../core/formatters.dart';
+import '../../core/transaction_ids.dart';
 import '../../models/customer.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/sales_provider.dart';
 
 class RecordPaymentSheet extends StatefulWidget {
   final Customer customer;
@@ -20,11 +22,14 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  final _transactionController = TextEditingController();
+  bool _isMobile = false;
 
   @override
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
+    _transactionController.dispose();
     super.dispose();
   }
 
@@ -72,9 +77,35 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                 },
               ),
               const SizedBox(height: 12),
+              Text(lang.t('paymentMethod'), style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(label: Text(lang.t('cash')), selected: !_isMobile, onSelected: (_) => setState(() => _isMobile = false)),
+                  ChoiceChip(label: Text(lang.t('mobile')), selected: _isMobile, onSelected: (_) => setState(() => _isMobile = true)),
+                ],
+              ),
+              if (_isMobile) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _transactionController,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: InputDecoration(labelText: lang.t('transactionId'), hintText: lang.t('transactionIdHint')),
+                  validator: (v) {
+                    final id = (v ?? '').trim();
+                    if (id.isEmpty) return lang.t('transactionIdRequired');
+                    final sales = context.read<SalesProvider>().sales;
+                    final payments = context.read<CustomerProvider>().payments;
+                    if (TransactionIds.isUsed(id, sales, payments)) return lang.t('transactionIdUsed');
+                    return null;
+                  },
+                ),
+              ],
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _noteController,
-                decoration: InputDecoration(labelText: lang.t('optional')),
+                decoration: InputDecoration(labelText: '${lang.t('note')} (${lang.t('optional')})'),
               ),
               const SizedBox(height: 20),
               ElevatedButton(onPressed: _submit, child: Text(lang.t('save'))),
@@ -91,6 +122,8 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
           customerId: widget.customer.id,
           amount: double.parse(_amountController.text),
           note: _noteController.text.trim(),
+          method: _isMobile ? 'mobile' : 'cash',
+          transactionId: _isMobile ? TransactionIds.normalize(_transactionController.text) : '',
         );
     if (mounted) {
       Navigator.of(context).pop();

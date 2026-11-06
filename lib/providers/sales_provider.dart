@@ -54,6 +54,20 @@ class SalesProvider extends ChangeNotifier {
     return salesForCustomer(customerId).fold(0.0, (sum, s) => sum + s.outstanding);
   }
 
+  /// Sales keep a copy of the customer's name, so update it after a rename.
+  Future<void> renameCustomer(String customerId, String name) async {
+    var changed = false;
+    for (var i = 0; i < _sales.length; i++) {
+      if (_sales[i].customerId == customerId && _sales[i].customerName != name) {
+        _sales[i] = _sales[i].copyWith(customerName: name);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    notifyListeners();
+    await LocalStore.saveList(LocalStore.salesKey, _sales.map((s) => s.toJson()).toList());
+  }
+
   Future<Sale> addSale({
     required String stockItemId,
     required String stockType,
@@ -63,6 +77,8 @@ class SalesProvider extends ChangeNotifier {
     required double pricePerBag,
     required PaymentType paymentType,
     required double amountPaid,
+    String transactionId = '',
+    String soldBy = '',
     DateTime? date,
   }) async {
     final sale = Sale(
@@ -76,6 +92,8 @@ class SalesProvider extends ChangeNotifier {
       paymentType: paymentType,
       amountPaid: amountPaid,
       date: date ?? DateTime.now(),
+      transactionId: transactionId,
+      soldBy: soldBy,
     );
     _sales.add(sale);
     notifyListeners();

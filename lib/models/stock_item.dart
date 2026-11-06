@@ -1,3 +1,5 @@
+import 'sale.dart';
+
 /// A batch of dagaa stock received into inventory, tracked by magunia (bags)
 /// rather than loose kg — this matches how wholesale dagaa is actually
 /// bought and sold in Mwanza.
@@ -29,6 +31,14 @@ class StockItem {
   double get totalPurchaseValue => totalMagunia * purchasePricePerBag;
 
   double get remainingStockValue => remainingMagunia * purchasePricePerBag;
+
+  /// Planned profit on one bag at the listed selling price.
+  double get profitPerBag => sellingPricePerBag - purchasePricePerBag;
+
+  /// Profit actually made on this batch, using the price each bag sold for.
+  double profitEarned(Iterable<Sale> sales) => sales
+      .where((s) => s.stockItemId == id)
+      .fold(0.0, (sum, s) => sum + s.magunia * (s.pricePerBag - purchasePricePerBag));
 
   StockItem copyWith({
     String? id,
