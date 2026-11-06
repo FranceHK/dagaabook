@@ -37,6 +37,9 @@ class AppTheme {
         bodyLarge: TextStyle(color: AppColors.textPrimary),
         bodyMedium: TextStyle(color: AppColors.textSecondary),
       ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        constraints: BoxConstraints(maxWidth: 600),
+      ),
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
