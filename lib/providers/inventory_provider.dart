@@ -1,13 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/stock_item.dart';
-import '../services/api_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/local_store.dart';
 
 /// Manages Mizigo (inventory) stock entries, tracked by magunia (bags).
-/// Falls back to local data when the API server is unavailable.
+/// Saved on this device.
 class InventoryProvider extends ChangeNotifier {
   final List<StockItem> _items = [];
-  int _counter = 100;
   bool _isLoading = false;
   String? _error;
 
@@ -30,22 +28,20 @@ class InventoryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (await ApiService.checkConnection()) {
-        final stock = await ApiService.getStock();
-        _items.clear();
-        _items.addAll(stock);
-      } else {
-        _items.clear();
-        _items.addAll(MockDataService.seedStock());
-      }
+      final stock = await LocalStore.loadList(LocalStore.stockKey, StockItem.fromJson);
+      _items
+        ..clear()
+        ..addAll(stock);
     } catch (e) {
-      _items.clear();
-      _items.addAll(MockDataService.seedStock());
+      _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
+
+  Future<void> _save() =>
+      LocalStore.saveList(LocalStore.stockKey, _items.map((i) => i.toJson()).toList());
 
   StockItem? byId(String id) {
     try {
@@ -62,27 +58,17 @@ class InventoryProvider extends ChangeNotifier {
     required double sellingPricePerBag,
     String supplier = '',
   }) async {
-    if (ApiService.isAvailable) {
-      final item = await ApiService.createStock(
-        type: type,
-        totalMagunia: totalMagunia,
-        purchasePricePerBag: purchasePricePerBag,
-        sellingPricePerBag: sellingPricePerBag,
-        supplier: supplier,
-      );
-      _items.add(item);
-    } else {
-      _items.add(StockItem(
-        id: 'local_${_counter++}',
-        type: type,
-        totalMagunia: totalMagunia,
-        purchasePricePerBag: purchasePricePerBag,
-        sellingPricePerBag: sellingPricePerBag,
-        dateAdded: DateTime.now(),
-        supplier: supplier,
-      ));
-    }
+    _items.add(StockItem(
+      id: LocalStore.newId('stock'),
+      type: type,
+      totalMagunia: totalMagunia,
+      purchasePricePerBag: purchasePricePerBag,
+      sellingPricePerBag: sellingPricePerBag,
+      dateAdded: DateTime.now(),
+      supplier: supplier,
+    ));
     notifyListeners();
+    await _save();
   }
 
   void recordSale({required String stockItemId, required int magunia}) {
@@ -94,5 +80,6 @@ class InventoryProvider extends ChangeNotifier {
     }
     _items[index] = item.copyWith(soldMagunia: item.soldMagunia + magunia);
     notifyListeners();
+    _save();
   }
 }
