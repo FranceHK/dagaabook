@@ -1,0 +1,64 @@
+name: Shorebird Patch
+
+# Sends Dart code changes straight to installed apps, no new APK needed.
+# Run it from the Actions tab ("Run workflow") after merging changes.
+# Phones download the patch when the app opens and use it on the next start.
+#
+# A patch can't change native parts (new packages with Android code, new
+# permissions, the app icon). For those, push a new tag like v1.3.0 instead.
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release to patch, like 1.2.0+1012 (leave "latest" for the newest)'
+        required: true
+        default: latest
+
+permissions:
+  contents: read
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.6
+          channel: stable
+          cache: true
+
+      - name: Test
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+
+      - uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+
+      # Keep the version the app reports the same as the release it patches.
+      - name: Work out version
+        run: |
+          TAG="$(git describe --tags --abbrev=0 --match 'v*')"
+          echo "BUILD_NAME=${TAG#v}" >> "$GITHUB_ENV"
+
+      - name: Make Shorebird patch
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+        run: >
+          shorebird patch android
+          --release-version="${{ inputs.release_version }}"
+          --dart-define=APP_VERSION="$BUILD_NAME"
