@@ -4,8 +4,6 @@ import 'package:amazing_icons/outlined.dart';
 import '../../core/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
-import '../main_shell.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,31 +34,17 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _passwordController.text,
     );
 
-    if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainShell()),
-      );
-    } else if (auth.error != null && mounted) {
+    // On success AuthGate swaps this screen for the app.
+    if (!success && auth.error != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.error!)),
       );
     }
   }
 
-  void _loginLocal() {
-    context.read<AuthProvider>().loginLocal(
-          firstName: 'Mtumiaji',
-          lastName: '',
-        );
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MainShell()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>();
-    final auth = context.watch<AuthProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -138,59 +122,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 28),
                   ElevatedButton(
-                    onPressed: auth.isLoading ? null : _submit,
-                    child: auth.isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(lang.t('loginButton')),
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: auth.isLoading
-                        ? null
-                        : () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const RegisterScreen(),
-                              ),
-                            );
-                          },
-                    child: Text(
-                      lang.t('noAccount'),
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      const Expanded(child: Divider()),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          lang.t('or'),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                      const Expanded(child: Divider()),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: auth.isLoading ? null : _loginLocal,
-                    icon: Icon(AmazingIconOutlined.status, size: 18),
-                    label: Text(lang.t('loginLocal')),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
+                    onPressed: _submit,
+                    child: Text(lang.t('loginButton')),
                   ),
                 ],
               ),
