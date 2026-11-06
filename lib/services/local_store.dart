@@ -13,10 +13,12 @@ class LocalStore {
   static const salesKey = 'sales';
   static const profileKey = 'business_profile';
   static const languageKey = 'language';
+  // Plain-text login from older versions; moved into [accountKey] on load.
   static const loginPhoneKey = 'login_phone';
   static const loginPasswordKey = 'login_password';
   static const loggedInKey = 'logged_in';
   static const helpersKey = 'helpers';
+  static const accountKey = 'account';
   static const roleKey = 'role';
   static const helperIdKey = 'helper_id';
   static const helperNameKey = 'helper_name';
@@ -27,7 +29,7 @@ class LocalStore {
   static const syncPendingKey = 'sync_pending';
 
   /// The keys whose changes should be backed up.
-  static const dataKeys = {customersKey, paymentsKey, stockKey, salesKey, profileKey, helpersKey};
+  static const dataKeys = {customersKey, paymentsKey, stockKey, salesKey, profileKey, helpersKey, accountKey};
 
   /// Called after business data is saved, so a backup can follow.
   static void Function()? onDataChanged;

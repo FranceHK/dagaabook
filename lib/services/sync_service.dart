@@ -34,6 +34,7 @@ class SyncService {
     'stock': LocalStore.stockKey,
     'sales': LocalStore.salesKey,
     'helpers': LocalStore.helpersKey,
+    'account': LocalStore.accountKey,
   };
   static const _profileId = 'main';
   static const _timeout = Duration(seconds: 60);
@@ -50,8 +51,9 @@ class SyncService {
   }
 
   /// Joins two lists of records by id. Records are never deleted, so the
-  /// result holds every id from both; [preferLocal] decides who wins when
-  /// both have the same id (the owner's phone wins, a helper's loses).
+  /// result holds every id from both. When both have the same id, the newer
+  /// `updated_at` wins if both have one (the owner login); otherwise
+  /// [preferLocal] decides (the owner's phone wins, a helper's loses).
   static List<Map<String, dynamic>> mergeById(
     List<Map<String, dynamic>> local,
     List<Map<String, dynamic>> server, {
@@ -60,7 +62,15 @@ class SyncService {
     final byId = <String, Map<String, dynamic>>{for (final r in server) '${r['id']}': r};
     for (final r in local) {
       final id = '${r['id']}';
-      if (preferLocal || !byId.containsKey(id)) byId[id] = r;
+      final other = byId[id];
+      if (other == null) {
+        byId[id] = r;
+        continue;
+      }
+      final mine = r['updated_at'];
+      final theirs = other['updated_at'];
+      final localWins = mine is String && theirs is String ? mine.compareTo(theirs) >= 0 : preferLocal;
+      if (localWins) byId[id] = r;
     }
     return byId.values.toList();
   }
