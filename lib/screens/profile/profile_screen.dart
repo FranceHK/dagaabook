@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:amazing_icons/outlined.dart';
 import '../../core/responsive.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_version.dart';
 import '../../core/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
@@ -187,7 +188,7 @@ class ProfileScreen extends StatelessWidget {
                       _ProfileTile(
                         icon: AmazingIconOutlined.infoCircle,
                         label: lang.t('version'),
-                        value: '1.0.0',
+                        value: AppVersion.current,
                       ),
                       const Divider(height: 1, indent: 56),
                       _ProfileTile(
